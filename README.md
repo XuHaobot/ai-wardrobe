@@ -18,10 +18,10 @@
 ### 效果展示
 
 #### 1. 衣橱管理 + 智能推荐
-![衣橱管理](screenshots/wardrobe.png)
+<img width="1892" height="914" alt="d5697abb9096c2f9055a48564bdbb53d" src="https://github.com/user-attachments/assets/8a353432-d29f-456f-b29c-e5b59fdd9152" />
 
 #### 2. 虚拟试穿效果
-![虚拟试穿](screenshots/tryon.png)
+<img width="1854" height="890" alt="a40d4844688ed4e686c8ae7292c109fa" src="https://github.com/user-attachments/assets/808dd960-bc72-491b-94da-d142bf965f55" />
 
 ---
 
