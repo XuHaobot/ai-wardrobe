@@ -1,0 +1,68 @@
+# Frontend (Vite + Vue3)
+node_modules/
+dist/
+*.log
+.vscode/
+.idea/
+.DS_Store
+*.local
+
+# 内部对接文档（可能含真实凭据）
+前端对接指南.md
+代码审查报告.md
+
+# 本地环境配置（含真实 API Key，不入仓）
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 虚拟环境
+venv/
+.venv/
+env/
+.ENV/
+
+# 后端本地数据 / 缓存
+backend/data/
+backend/uploads/
+backend/__pycache__/
+backend/**/__pycache__/
+
+# 数据库 / 向量库
+*.db
+*.sqlite
+*.sqlite3
+*.chroma/
+chroma/
+
+# 临时文件
+*.tmp
+*.bak
+*.swp
+test_*.txt
+debug_*.py
+check_model.py
+quick_tryon*.py
+*.log
+.DS_Store
+# Vite 脚手架残留
+**/HelloWorld.vue
+**/assets/vue.svg
+**/assets/logo.svg
+
+# 旧前端目录（保留 .gitignore 自身以兼容）
+ai-outfit-recommender/.vscode/
+ai-outfit-recommender/node_modules/
+ai-outfit-recommender/dist/
+ai-outfit-recommender/frontend.log
+
+# 旧后端（Spring Boot）目录
+outfit/
+ai-outfit-recommender/uploads/
