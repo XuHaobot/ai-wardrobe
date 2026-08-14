@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from schemas.common import Result
 from services.recommend_service import RecommendService
-from main_deps import get_current_user_id
+from main_deps import get_guest_context, GuestContext
 
 router = APIRouter()
 
@@ -16,12 +16,12 @@ router = APIRouter()
 async def get_recommendation(
     purpose: str = Query("", description="出行目的"),
     city: str = Query("北京", description="城市"),
-    user_id: int = Depends(get_current_user_id),
+    ctx: GuestContext = Depends(get_guest_context),
     db: Session = Depends(get_db),
 ):
-    """AI穿搭推荐"""
+    """AI穿搭推荐（游客可用演示衣橱）"""
     try:
-        result = await RecommendService.recommend(db, user_id, purpose, city)
+        result = await RecommendService.recommend(db, ctx.user_id, purpose, city)
         return Result.success(result)
     except Exception as e:
         return Result.error(f"推荐失败: {str(e)}")
@@ -30,12 +30,29 @@ async def get_recommendation(
 @router.get("/closet/search")
 async def search_closet(
     q: str = Query(..., description="搜索关键词"),
-    user_id: int = Depends(get_current_user_id),
+    ctx: GuestContext = Depends(get_guest_context),
     db: Session = Depends(get_db),
 ):
-    """智能搜索衣橱（向量语义 + 关键词混合）"""
+    """智能搜索衣橱（向量语义 + 关键词混合，游客可用）"""
     try:
-        results = await RecommendService.smart_search(db, user_id, q)
+        results = await RecommendService.smart_search(db, ctx.user_id, q)
         return Result.success(results)
     except Exception as e:
         return Result.error(f"搜索失败: {str(e)}")
+
+
+@router.get("/recommend/packing")
+async def get_packing_list(
+    purpose: str = Query("", description="出行目的/场景，如 旅行、出差、海边度假"),
+    city: str = Query("北京", description="目的地城市"),
+    days: int = Query(3, ge=1, le=30, description="行程天数"),
+    season: str = Query("", description="季节，如 春/夏/秋/冬"),
+    ctx: GuestContext = Depends(get_guest_context),
+    db: Session = Depends(get_db),
+):
+    """旅行场景打包推荐：基于衣橱生成胶囊衣橱清单（游客可用）"""
+    try:
+        result = await RecommendService.generate_packing(db, ctx.user_id, purpose, city, days, season)
+        return Result.success(result)
+    except Exception as e:
+        return Result.error(f"打包推荐失败: {str(e)}")

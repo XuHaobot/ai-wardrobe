@@ -54,18 +54,31 @@
            <div class="header-left">
              <h3>My Wardrobe</h3>
              <span class="badge">{{ totalClosetItems }}</span>
+             <span v-if="isGuest" class="guest-badge" title="游客试玩模式：仅可体验，数据不保存">✨ 游客</span>
            </div>
-           <UploadInput @uploaded="handleUploaded" />
+           <div class="header-actions">
+             <button class="header-btn" @click="openPacking" title="旅行打包助手">
+               <el-icon><Promotion /></el-icon> 旅行打包
+             </button>
+             <button class="header-btn" @click="showHistory = true" title="我的搭配历史">
+               <el-icon><Collection /></el-icon> 我的搭配
+             </button>
+             <UploadInput v-if="!isGuest" @uploaded="handleUploaded" />
+             <el-tooltip v-else content="登录后可上传自己的衣物" placement="bottom">
+               <button class="header-btn disabled" disabled>＋ 上传</button>
+             </el-tooltip>
+           </div>
         </div>
         <div class="workspace-body">
-           <ClosetManager 
-             ref="closetRef" 
-             :highlighted-items="highlightedOutfitItems"
-             @count-update="val => totalClosetItems = val" 
-             @items-loaded="onClosetItemsLoaded"
-             @selection-changed="onWardrobeSelection"
-             @try-on="handleWardrobeTryOn"
-           />
+            <ClosetManager 
+              ref="closetRef" 
+              :highlighted-items="highlightedOutfitItems"
+              :readonly="isGuest"
+              @count-update="val => totalClosetItems = val" 
+              @items-loaded="onClosetItemsLoaded"
+              @selection-changed="onWardrobeSelection"
+              @try-on="handleWardrobeTryOn"
+            />
         </div>
       </main>
 
@@ -97,18 +110,35 @@
              </div>
              <el-button link type="danger" size="small" @click="logout">Exit</el-button>
           </template>
-           <template v-else>
+          <template v-else-if="isGuest">
+             <span class="guest-tag">游客试玩模式</span>
+             <el-button size="small" round type="primary" @click="handleLogout">登录 / 注册</el-button>
+          </template>
+          <template v-else>
             <el-button size="small" round @click="$router.push('/login')">Login</el-button>
           </template>
         </div>
       </aside>
     </div>
+
+    <!-- 搭配历史侧滑面板 -->
+    <transition name="slide">
+      <div v-if="showHistory" class="history-drawer-mask" @click.self="showHistory = false">
+        <div class="history-drawer">
+          <HistoryPanel @close="showHistory = false" />
+        </div>
+      </div>
+    </transition>
+
+    <!-- 旅行打包助手 -->
+    <PackingDialog ref="packingRef" />
   </div>
 </template>
 
 <script setup>
 import { ref, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
+import { Promotion, Collection } from '@element-plus/icons-vue';
 import RoleManager from '../components/RoleManager.vue';
 import OutfitDisplay from '../components/OutfitDisplay.vue';
 import UploadInput from '../components/UploadInput.vue';
@@ -117,6 +147,8 @@ import WeatherInput from '../components/WeatherInput.vue';
 import ClosetManager from '../components/ClosetManager.vue';
 import RecommendationList from '../components/RecommendationList.vue';
 import ChatPanel from '../components/ChatPanel.vue';
+import HistoryPanel from '../components/HistoryPanel.vue';
+import PackingDialog from '../components/PackingDialog.vue';
 
 // State
 const currentRole = ref('female');
@@ -134,6 +166,19 @@ const wardrobeSelection = ref([]); // 衣橱手动选中的衣物
 const sidebarTab = ref('recommend'); // 左侧栏tab：recommend / chat
 
 const router = useRouter();
+
+// 游客试玩模式：无登录且 guest_mode 开启时为游客
+const isGuest = ref(!localStorage.getItem('auth_token') && localStorage.getItem('guest_mode') === '1');
+const showHistory = ref(false);
+const packingRef = ref(null);
+
+const openPacking = () => packingRef.value?.open();
+const handleLogout = () => {
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('guest_mode');
+  isGuest.value = false;
+  router.push('/login');
+};
 
 // Actions
 const handleRoleChange = (newRole) => {
@@ -297,6 +342,47 @@ const logout = () => {
   border-radius: 12px;
   font-size: 12px;
 }
+.guest-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #fff;
+  color: #1d1d1f;
+  border-radius: 18px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.header-btn:hover { border-color: #667eea; color: #667eea; }
+.header-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+.guest-tag { font-size: 12px; color: #667eea; font-weight: 500; }
+
+/* History drawer */
+.history-drawer-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.25);
+  display: flex; justify-content: flex-end; z-index: 100;
+}
+.history-drawer {
+  width: 380px; max-width: 90vw; height: 100%;
+  background: #fff; padding: 20px; box-sizing: border-box;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.08);
+}
+.slide-enter-active, .slide-leave-active { transition: opacity 0.25s; }
+.slide-enter-from, .slide-leave-to { opacity: 0; }
 
 .workspace-body {
   flex: 1;
@@ -407,5 +493,84 @@ const logout = () => {
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
+}
+
+/* ============================================================
+   移动端 H5 适配 (max-width: 768px)
+   三栏桌面布局 → 单列可滚动；顺序：衣橱 → 试穿 → AI助手
+   ============================================================ */
+@media (max-width: 768px) {
+  .app-root {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .studio-container {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  /* 三栏全宽，重排顺序 */
+  .sidebar-left,
+  .workspace-center,
+  .sidebar-right {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .workspace-center { order: 1; }   /* 衣橱优先：进去即可选衣物 */
+  .sidebar-right    { order: 2; }   /* 虚拟试穿 */
+  .sidebar-left     { order: 3; }   /* AI 推荐/对话最后 */
+
+  /* 取消内部独立滚动，交还给页面滚动 */
+  .sidebar-content { overflow-y: visible; }
+  .workspace-body { overflow: visible; padding: 14px; }
+
+  /* 顶栏换行，按钮可触达 */
+  .workspace-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+  .header-actions {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .header-btn { font-size: 12px; padding: 6px 10px; }
+
+  /* 试穿区给足高度，避免被压扁 */
+  .sidebar-right .visual-body {
+    min-height: 62vh;
+  }
+  .stage-wrapper { min-height: 320px; }
+
+  /* AI 助手区让聊天/推荐自然撑开 */
+  .sidebar-left { padding: 16px; }
+  .chat-section { min-height: 60vh; }
+
+  /* 搭配历史抽屉在手机上全屏 */
+  .history-drawer {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* 子组件移动端微调（穿透 scoped） */
+@media (max-width: 768px) {
+  /* 衣橱网格在窄屏降到 3 列 */
+  .workspace-body :deep(.closet-grid) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  /* 试穿舞台图片自适应不溢出 */
+  .stage-wrapper :deep(img) {
+    max-width: 100%;
+    height: auto;
+  }
 }
 </style>

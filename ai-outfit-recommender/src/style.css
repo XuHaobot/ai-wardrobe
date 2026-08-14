@@ -25,7 +25,14 @@ body {
 
 #app {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
+  height: 100%;
+}
+
+/* 移动端：允许整页纵向滚动，避免固定高度裁切内容 */
+@media (max-width: 768px) {
+  html, body { overflow-x: hidden; }
+  #app { height: auto; }
 }
 
 /* Scrollbar Styling */

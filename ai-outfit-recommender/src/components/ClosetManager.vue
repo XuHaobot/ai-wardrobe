@@ -13,7 +13,7 @@
       </div>
 
       <!-- 添加分类按钮 -->
-      <button class="tab-item tab-add-btn" @click.stop="showAddCategoryDialog = true" title="添加新分类">
+      <button v-if="!readonly" class="tab-item tab-add-btn" @click.stop="showAddCategoryDialog = true" title="添加新分类">
         <el-icon><Plus /></el-icon>
       </button>
     </div>
@@ -41,7 +41,7 @@
               </div>
               <!-- 衣物名称标签 -->
               <span v-if="item.name" class="item-name-tag">{{ item.name }}</span>
-              <div class="hover-overlay">
+              <div v-if="!readonly" class="hover-overlay">
                 <button class="action-btn edit-name-btn" @click.stop="openEditName(item)" title="修改名称">
                   <el-icon><EditPen /></el-icon>
                 </button>
@@ -138,6 +138,10 @@ const props = defineProps({
   highlightedItems: {
     type: Array,
     default: () => []
+  },
+  readonly: {
+    type: Boolean,
+    default: false
   }
 });
 

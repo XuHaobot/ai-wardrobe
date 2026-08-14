@@ -16,10 +16,6 @@ class Settings(BaseSettings):
     dashscope_api_key: str = ""
     # 高德天气
     amap_api_key: str = ""
-    # 火山引擎 (即梦)
-    volc_access_key: str = ""
-    volc_secret_key: str = ""
-    volc_jimeng_model: str = "jimeng_t2i_v40"
     # 腾讯云 COS
     cos_secret_id: str = ""
     cos_secret_key: str = ""
@@ -44,6 +40,10 @@ class Settings(BaseSettings):
     qwen_embedding_model: str = "text-embedding-v3"
     # 上传目录
     upload_dir: str = str(_BACKEND_DIR / "uploads")
+    # 游客/演示模式：演示账号 user_id（衣橱预置示例衣物）
+    demo_user_id: int = 1
+    # 是否允许游客试玩（无登录即可体验推荐/对话/试穿/搭配历史浏览）
+    allow_guest_mode: bool = True
 
     class Config:
         env_file = str(_ENV_FILE)

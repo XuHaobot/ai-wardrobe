@@ -18,10 +18,10 @@
 ### 效果展示
 
 #### 1. 衣橱管理 + 智能推荐
-<img width="1892" height="914" alt="d5697abb9096c2f9055a48564bdbb53d" src="https://github.com/user-attachments/assets/8a353432-d29f-456f-b29c-e5b59fdd9152" />
+![衣橱管理](screenshots/wardrobe.png)
 
 #### 2. 虚拟试穿效果
-<img width="1854" height="890" alt="a40d4844688ed4e686c8ae7292c109fa" src="https://github.com/user-attachments/assets/808dd960-bc72-491b-94da-d142bf965f55" />
+![虚拟试穿](screenshots/tryon.png)
 
 ---
 
@@ -266,6 +266,16 @@ npm run dev
 
 ---
 
+## 游客试玩模式
+
+为求职展示/公网 demo 设计，无需注册即可体验完整产品：
+
+- **进入方式**：登录页点击「游客试玩」，或首页在无 token 时自动以游客身份访问。
+- **身份隔离**：游客请求带 `X-Guest: 1`，后端映射到演示账号（`demo_user_id`，默认 1）的预置示例衣橱，开箱即有衣物可选。
+- **权限边界**：游客可体验 AI 推荐、虚拟试穿、智能搜索、AI 对话、浏览搭配历史；**上传/删除/改名/保存搭配**等写操作一律 `403`，杜绝数据污染与 token 滥用。
+- **演示衣橱**：服务启动时 `ensure_demo_closet()` 自动为演示账号预置覆盖全品类的示例衣物（不调用 AI 识别，零 token 消耗）。
+- **登录后**：写操作、个人衣橱、个人搭配历史全部恢复。
+
 ## 已知限制
 
 - ChromaDB 数据存储在 `data/chroma/`，迁移时需整目录复制
@@ -282,10 +292,22 @@ npm run dev
 - [x] 天气感知推荐
 - [x] 虚拟试穿
 - [x] AI 多轮对话
-- [ ] 衣物搭配历史记录
-- [ ] 旅行场景打包推荐
-- [ ] 移动端 H5 适配
+- [x] 游客试玩模式（预置示例衣橱 + 匿名身份，进首页即有衣物可体验）
+- [x] 衣物搭配历史记录（登录用户可保存/查看/删除搭配）
+- [x] 旅行场景打包推荐（胶囊衣橱清单生成）
+- [x] 移动端 H5 适配（≤768px 单列可滚动：衣橱→试穿→AI助手，顶栏换行、历史抽屉全屏、衣橱网格降列、试穿图自适应）
 - [ ] 多用户社交分享
+
+## 模型与 API Key 策略
+
+**统一使用阿里云 DashScope 单密钥（`DASHSCOPE_API_KEY`）**，覆盖全部 AI 能力：
+
+- 衣物识别：`qwen-vl-plus`（多模态）
+- 对话 / 推荐：`qwen-plus` / `qwen-vl`
+- 向量语义检索：`text-embedding-v3`
+- 虚拟试穿：DashScope `aitryon` 专用试穿模型
+
+> 早期预留的「火山引擎即梦」配置（`VOLC_ACCESS_KEY` 等）已确认未被任何代码调用，已从 `config.py` 与 `.env.example` 中移除。公网 demo 不提供「通义 / 即梦」二选一开关——避免访客被迫持有两套密钥、增加 BYOK 摩擦；如需扩展其他生图供应商，仅在 `backend/utils/ai_tryon.py` 内部替换 provider 即可，对前端无感。
 
 ---
 

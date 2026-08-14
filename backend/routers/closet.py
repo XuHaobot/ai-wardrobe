@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from schemas.common import Result
 from services.closet_service import ClosetService, _extract_name
-from main_deps import get_current_user_id
+from main_deps import get_current_user_id, get_guest_context, require_real_user, GuestContext
 
 router = APIRouter()
 
@@ -15,10 +15,10 @@ router = APIRouter()
 @router.post("/items")
 async def upload_item(
     image: UploadFile = File(...),
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_real_user),
     db: Session = Depends(get_db),
 ):
-    """上传衣物图片 -> AI识别 -> 存入衣橱"""
+    """上传衣物图片 -> AI识别 -> 存入衣橱（仅登录用户）"""
     try:
         image_bytes = await image.read()
         item = await ClosetService.add_item(db, user_id, image_bytes, image.filename or "upload.jpg")
@@ -38,21 +38,21 @@ async def list_items(
     page: int = Query(1, ge=1),
     size: int = Query(100, ge=1, le=1000),
     category: str = Query(None),
-    user_id: int = Depends(get_current_user_id),
+    ctx: GuestContext = Depends(get_guest_context),
     db: Session = Depends(get_db),
 ):
-    """获取衣橱列表（分页）"""
-    result = ClosetService.get_items(db, user_id, page, size, category)
+    """获取衣橱列表（分页，游客返回演示衣橱）"""
+    result = ClosetService.get_items(db, ctx.user_id, page, size, category)
     return Result.success(result)
 
 
 @router.delete("/closet/items")
 async def delete_item(
     url: str = Query(...),
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_real_user),
     db: Session = Depends(get_db),
 ):
-    """删除衣物"""
+    """删除衣物（仅登录用户）"""
     success = ClosetService.delete_item(db, user_id, url)
     if success:
         return Result.success(message="删除成功")
@@ -62,10 +62,10 @@ async def delete_item(
 @router.put("/closet/items/name")
 async def rename_item(
     body: dict,
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_real_user),
     db: Session = Depends(get_db),
 ):
-    """重命名衣物"""
+    """重命名衣物（仅登录用户）"""
     item_id = body.get("id")
     name = body.get("name", "")
     if not item_id:
@@ -78,7 +78,7 @@ async def rename_item(
 
 @router.post("/closet/rebuild-index")
 async def rebuild_vector_index(
-    user_id: int = Depends(get_current_user_id),
+    user_id: int = Depends(require_real_user),
     db: Session = Depends(get_db),
 ):
     """重建向量搜索索引"""

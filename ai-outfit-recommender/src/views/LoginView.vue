@@ -38,6 +38,14 @@
           </el-form>
         </el-tab-pane>
       </el-tabs>
+
+      <div class="guest-entry">
+        <el-divider>或者</el-divider>
+        <el-button class="guest-btn" round @click="enterGuestMode">
+          <span class="guest-icon">✨</span> 游客试玩（已有示例衣橱）
+        </el-button>
+        <p class="guest-tip">无需注册，直接体验 AI 推荐 / 虚拟试穿 / 智能对话</p>
+      </div>
     </div>
   </div>
 </template>
@@ -100,6 +108,7 @@ const submitLogin = () => {
           const token = data.token || '';
           if (token) {
             localStorage.setItem('auth_token', token);
+            localStorage.removeItem('guest_mode');
             ElMessage.success('登录成功');
             router.push('/');
           } else {
@@ -162,6 +171,13 @@ const resetRegister = () => {
   registerForm.value.password = '';
   registerForm.value.confirm = '';
 };
+
+const enterGuestMode = () => {
+  localStorage.setItem('guest_mode', '1');
+  localStorage.removeItem('auth_token');
+  ElMessage.success('已进入游客试玩模式');
+  router.push('/');
+};
 </script>
 
 <style scoped>
@@ -199,6 +215,31 @@ const resetRegister = () => {
   margin-top: 10px;
   height: 44px;
   font-size: 16px;
+}
+
+/* Guest entry */
+.guest-entry {
+  margin-top: 8px;
+  text-align: center;
+}
+.guest-btn {
+  width: 100%;
+  height: 44px;
+  font-size: 15px;
+  color: #1d1d1f;
+  border-color: rgba(0,0,0,0.15);
+}
+.guest-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+.guest-icon {
+  margin-right: 4px;
+}
+.guest-tip {
+  font-size: 12px;
+  color: #999;
+  margin: 10px 0 0;
 }
 
 /* Customize Tabs */

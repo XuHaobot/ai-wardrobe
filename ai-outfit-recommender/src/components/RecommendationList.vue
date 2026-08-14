@@ -36,6 +36,14 @@
             >
               试穿
             </el-button>
+            <el-button
+              size="small"
+              round
+              class="save-btn"
+              @click="saveOutfit(item)"
+            >
+              保存
+            </el-button>
             <div class="detail-btn" @click="openDetail(index)" title="查看详情">
               <el-icon><InfoFilled /></el-icon>
             </div>
@@ -77,6 +85,12 @@
       </template>
       <template #footer>
         <el-button @click="showDetail = false">关闭</el-button>
+        <el-button
+          @click="saveFromDetail"
+          class="dialog-save-btn"
+        >
+          保存到搭配
+        </el-button>
         <el-button
           type="primary"
           @click="applyFromDetail"
@@ -128,6 +142,46 @@ const applyFromDetail = () => {
   if (detailIndex.value >= 0 && recommendations.value[detailIndex.value]) {
     applyOutfit(recommendations.value[detailIndex.value].outfit);
     showDetail.value = false;
+  }
+};
+
+const saveOutfit = async (rec) => {
+  if (!rec?.outfit?.length) return;
+  // 游客模式不可保存，提示登录
+  if (!localStorage.getItem('auth_token')) {
+    ElMessage.warning('登录后即可保存搭配到「我的搭配」');
+    return;
+  }
+  const items = rec.outfit.map(c => ({ url: c.imageUrl, name: c.name || '' }));
+  try {
+    const res = await fetch('/outfit/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: localStorage.getItem('auth_token') || '' },
+      body: JSON.stringify({
+        title: rec.title || '我的搭配',
+        items,
+        reason: rec.reason || '',
+        weather: rec.weather || '',
+        purpose: props.purpose || '',
+        scene_type: 'daily',
+      }),
+    });
+    const payload = await res.json();
+    if (res.ok && payload.code === 1) {
+      ElMessage.success('已保存到「我的搭配」');
+    } else if (res.status === 403) {
+      ElMessage.warning('游客模式不可保存，请先登录');
+    } else {
+      ElMessage.error(payload.msg || '保存失败');
+    }
+  } catch {
+    ElMessage.error('保存失败，请稍后重试');
+  }
+};
+
+const saveFromDetail = () => {
+  if (detailIndex.value >= 0 && recommendations.value[detailIndex.value]) {
+    saveOutfit(recommendations.value[detailIndex.value]);
   }
 };
 
@@ -330,6 +384,16 @@ watch(() => props.trigger, (val) => {
   height: auto;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
+}
+.save-btn {
+  font-size: 11px;
+  padding: 4px 12px;
+  height: auto;
+  color: #667eea;
+  border-color: rgba(102, 126, 234, 0.4);
+}
+.save-btn:hover {
+  background: rgba(102, 126, 234, 0.06);
 }
 
 .detail-btn {

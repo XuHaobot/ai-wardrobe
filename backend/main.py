@@ -8,12 +8,14 @@ import os
 from pathlib import Path
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from database import init_db
 from config import get_settings
+from seed_demo import ensure_demo_closet
 
 
 @asynccontextmanager
@@ -24,6 +26,7 @@ async def lifespan(app: FastAPI):
     os.makedirs(settings.upload_dir, exist_ok=True)
     os.makedirs(Path(__file__).resolve().parent / "data", exist_ok=True)
     init_db()
+    ensure_demo_closet()
     print("[OK] 数据库初始化完成")
     print(f"[DIR] 上传目录: {os.path.abspath(settings.upload_dir)}")
     print(f"[KEY] DashScope API: {'已配置' if settings.dashscope_api_key else '未配置'}")
@@ -64,6 +67,7 @@ from routers.tryon import router as tryon_router
 from routers.weather import router as weather_router
 from routers.chat import router as chat_router
 from routers.locate import router as locate_router
+from routers.history import router as history_router
 
 app.include_router(auth_router, tags=["用户认证"])
 app.include_router(closet_router, tags=["衣橱管理"])
@@ -72,6 +76,7 @@ app.include_router(tryon_router, tags=["虚拟试穿"])
 app.include_router(weather_router, tags=["天气查询"])
 app.include_router(chat_router, tags=["AI对话"])
 app.include_router(locate_router, tags=["定位服务"])
+app.include_router(history_router, tags=["搭配历史"])
 
 
 @app.get("/")
@@ -88,6 +93,33 @@ async def root():
             "多轮对话 (Memory + SSE Streaming)",
         ],
     }
+
+
+# ============================================================
+# 生产环境：托管前端构建产物（仅当 dist 存在时生效，本地开发不受影响）
+# 单容器同时提供 API 与 SPA，CloudRun 部署无需额外静态服务器
+# ============================================================
+_FRONTEND_DIST = Path(__file__).resolve().parent.parent / "ai-outfit-recommender" / "dist"
+if not _FRONTEND_DIST.exists():
+    _FRONTEND_DIST = Path("/app/static")  # Docker 内备选路径
+
+# 这些前缀属于后端 API，未匹配时应返回 404 而非 SPA 首页
+_API_PREFIXES = (
+    "api/", "auth/", "recommend/", "items/", "closet/", "tryon/",
+    "weather/", "uploads/", "user/", "users/", "locate/", "outfit/",
+)
+
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    # 已注册的 API 路由优先匹配；这里只处理未匹配的路径
+    if _FRONTEND_DIST.exists():
+        target = _FRONTEND_DIST / full_path
+        if full_path and target.is_file():
+            return FileResponse(str(target))
+        if not full_path.startswith(_API_PREFIXES):
+            return FileResponse(str(_FRONTEND_DIST / "index.html"))
+    raise HTTPException(status_code=404, detail="Not Found")
 
 
 if __name__ == "__main__":

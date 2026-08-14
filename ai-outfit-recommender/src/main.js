@@ -21,13 +21,17 @@ app.config.errorHandler = (err, instance, info) => {
 
 app.mount('#app')
 
-// 全局 fetch 拦截器：自动附加 token + 统一错误处理 + 10秒超时保护
+// 全局 fetch 拦截器：自动附加 token + 游客头 + 统一错误处理 + 10秒超时保护
 const originalFetch = window.fetch
 window.fetch = (input, init = {}) => {
   const token = localStorage.getItem('auth_token') || ''
   const headers = new Headers(init.headers || {})
   if (token) {
     headers.set('Authorization', token)
+  }
+  // 游客试玩模式：无登录时附加 X-Guest 头，后端识别为演示账号
+  if (!token && localStorage.getItem('guest_mode') === '1') {
+    headers.set('X-Guest', '1')
   }
   // 默认10秒超时（可通过 init.signal 自定义覆盖）
   const controller = new AbortController()

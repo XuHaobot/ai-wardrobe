@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from database import get_db
 from schemas.common import Result
 from services.tryon_service import TryOnService
-from main_deps import get_current_user_id
+from main_deps import get_guest_context, GuestContext
 
 router = APIRouter()
 
@@ -21,9 +21,11 @@ class TryOnRequest(BaseModel):
 @router.post("/tryon")
 async def try_on(
     body: TryOnRequest,
-    user_id: int = Depends(get_current_user_id),
+    ctx: GuestContext = Depends(get_guest_context),
     db: Session = Depends(get_db),
 ):
+    """AI虚拟试穿（游客可用演示衣橱试穿）"""
+    user_id = ctx.user_id
     """AI虚拟试穿"""
     if not body.clothingUrls:
         return Result.error("请选择至少一件衣物")

@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from database import get_db
-from main_deps import get_current_user_id
+from main_deps import get_guest_context, GuestContext
 
 router = APIRouter()
 
@@ -22,9 +22,11 @@ class ChatRequest(BaseModel):
 @router.post("/api/chat/stream")
 async def chat_stream(
     body: ChatRequest,
-    user_id: int = Depends(get_current_user_id),
+    ctx: GuestContext = Depends(get_guest_context),
     db: Session = Depends(get_db),
 ):
+    """流式AI对话接口（SSE，游客可用演示账号对话）"""
+    user_id = ctx.user_id
     """流式AI对话接口（SSE）"""
     from agent.core import AgentCore
     from agent.memory import MemoryManager
@@ -63,9 +65,11 @@ async def chat_stream(
 @router.post("/api/chat")
 async def chat(
     body: ChatRequest,
-    user_id: int = Depends(get_current_user_id),
+    ctx: GuestContext = Depends(get_guest_context),
     db: Session = Depends(get_db),
 ):
+    """非流式AI对话接口（游客可用）"""
+    user_id = ctx.user_id
     """非流式AI对话接口"""
     from agent.core import AgentCore
     from agent.memory import MemoryManager

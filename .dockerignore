@@ -1,0 +1,29 @@
+# 密钥与本地环境
+.env
+.env.*
+!.env.example
+!.env.server.example
+
+# 前端依赖与构建缓存（构建阶段会重新安装）
+ai-outfit-recommender/node_modules
+ai-outfit-recommender/dist
+ai-outfit-recommender/.vite
+
+# Python 缓存
+__pycache__
+*.pyc
+.pytest_cache
+
+# 运行时可变数据（容器内重建，不进镜像）
+backend/data/chroma
+backend/data/*.db
+backend/uploads
+backend/__pycache__
+
+# 杂项
+.git
+.gitignore
+*.log
+debug_*.py
+check_*.py
+quick_*.py
