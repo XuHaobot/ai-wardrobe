@@ -5,8 +5,9 @@
       <div class="title-row">
         <h1 class="m-page-title">My Wardrobe</h1>
         <span class="count-badge">{{ items.length }}</span>
-        <span v-if="isGuest" class="guest-badge">✨ 游客</span>
+        <span v-if="isGuest" class="guest-badge">✨ 游客试玩</span>
       </div>
+      <p v-if="isGuest" class="guest-hint">{{ guestHint }}</p>
 
       <div class="quick-actions">
         <button class="quick-btn" @click="goPacking">
@@ -92,7 +93,8 @@ const loading = ref(true);
 const activeCategory = ref('all');
 const selected = ref([]);
 
-const isGuest = computed(() => !localStorage.getItem('auth_token') && localStorage.getItem('guest_mode') === '1');
+const isGuest = computed(() => app.isGuest());
+const guestHint = computed(() => isGuest.value ? '游客试玩中，登录后可管理真实衣橱' : '');
 
 const filteredItems = computed(() => {
   if (activeCategory.value === 'all') return items.value;
@@ -101,10 +103,7 @@ const filteredItems = computed(() => {
 
 const isSelected = (item) => selected.value.some(s => s.id === item.id);
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('auth_token') || '';
-  return token ? { Authorization: token } : {};
-};
+const getAuthHeaders = () => app.authHeaders();
 
 const normalizeCategory = (category, description = '') => {
   const raw = String(category || '').trim().toLowerCase();
@@ -220,6 +219,11 @@ onMounted(fetchItems);
   padding: 4px 10px;
   border-radius: 999px;
 }
+.guest-hint {
+  font-size: 12px;
+  color: var(--m-text-secondary);
+  margin: -8px 0 12px;
+}
 
 .quick-actions {
   display: flex;
@@ -280,7 +284,7 @@ onMounted(fetchItems);
 
 .img-wrap {
   aspect-ratio: 1;
-  background: #E5E7EB;
+  background: #FFFFFF;
   border-radius: var(--m-radius-md);
   overflow: hidden;
   position: relative;
@@ -291,7 +295,8 @@ onMounted(fetchItems);
 .img-wrap img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  padding: 6px;
 }
 .check-dot {
   position: absolute;

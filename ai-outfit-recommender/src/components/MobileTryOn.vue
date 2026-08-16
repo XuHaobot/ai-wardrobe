@@ -38,10 +38,7 @@
         <p>AI 正在为你生成试穿效果…</p>
       </div>
       <img v-else-if="resultImage" :src="resultImage" class="result-image" alt="试穿结果" />
-      <div v-else class="stage-state">
-        <p class="placeholder-text">模特试穿图</p>
-        <p class="stage-tip">从衣橱选择衣物，点击上方「试穿」按钮</p>
-      </div>
+      <img v-else :src="baseRoleImage" class="result-image model-base" alt="模特底图" />
     </div>
 
     <!-- Footer actions -->
@@ -96,7 +93,7 @@ const doTryOn = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: localStorage.getItem('auth_token') || ''
+        ...app.authHeaders()
       },
       body: JSON.stringify({
         gender: role.value,
@@ -219,6 +216,9 @@ const doTryOn = async () => {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+.model-base {
+  background: #fff;
 }
 .spinner {
   width: 40px;

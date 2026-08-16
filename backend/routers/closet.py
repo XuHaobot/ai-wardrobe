@@ -76,6 +76,25 @@ async def rename_item(
     return Result.error("未找到该衣物")
 
 
+@router.put("/closet/items/tags")
+async def update_item_tags(
+    body: dict,
+    user_id: int = Depends(require_real_user),
+    db: Session = Depends(get_db),
+):
+    """更新衣物风格标签（仅登录用户）"""
+    item_id = body.get("id")
+    tags = body.get("tags", [])
+    if not item_id:
+        return Result.error("缺少物品ID")
+    if not isinstance(tags, list):
+        return Result.error("tags 必须是数组")
+    success = ClosetService.update_tags(db, user_id, item_id, tags)
+    if success:
+        return Result.success(message="标签更新成功")
+    return Result.error("未找到该衣物")
+
+
 @router.post("/closet/rebuild-index")
 async def rebuild_vector_index(
     user_id: int = Depends(require_real_user),

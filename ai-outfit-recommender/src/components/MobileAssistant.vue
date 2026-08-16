@@ -77,8 +77,9 @@
 import { ref, computed, inject } from 'vue';
 import { ElMessage } from 'element-plus';
 
-const emit = defineEmits(['navigate']);
 const app = inject('mobileApp');
+
+const emit = defineEmits(['navigate']);
 
 const query = ref('');
 const loading = ref(false);
@@ -109,7 +110,7 @@ const submitQuery = async () => {
 
   try {
     const res = await fetch(`/recommend?purpose=${encodeURIComponent(purpose)}`, {
-      headers: { Authorization: localStorage.getItem('auth_token') || '' }
+      headers: app.authHeaders()
     });
     const payload = await res.json();
 

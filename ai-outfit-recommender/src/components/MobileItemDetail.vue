@@ -6,6 +6,11 @@
       <button class="m-back-btn" @click="showMenu = !showMenu">⋯</button>
     </header>
 
+    <div class="guest-banner" v-if="isGuest">
+      <span>✨</span>
+      <span>游客模式下仅可预览，登录后可管理标签与删除衣物</span>
+    </div>
+
     <div class="detail-image-card">
       <img v-if="item?.imageUrl" :src="item.imageUrl" :alt="item.name" />
     </div>
@@ -21,14 +26,37 @@
       </div>
 
       <div class="style-section">
-        <h3 class="section-label">风格标签</h3>
-        <div class="style-tags">
-          <span v-for="tag in styleTags" :key="tag" class="style-tag">{{ tag }}</span>
+        <div class="section-head">
+          <h3 class="section-label">风格标签</h3>
+          <span v-if="tagChanged" class="changed-hint">已修改，记得保存</span>
         </div>
+
+        <div class="style-tags">
+          <span v-for="(tag, idx) in tags" :key="tag + idx" class="style-tag">
+            {{ tag }}
+            <button v-if="!isGuest" class="tag-del" @click="removeTag(idx)">×</button>
+          </span>
+          <span v-if="tags.length === 0" class="empty-tag">暂无标签</span>
+        </div>
+
+        <div v-if="!isGuest" class="tag-input-row">
+          <input
+            v-model="newTag"
+            class="m-input tag-input"
+            placeholder="输入标签，如：通勤、复古、运动"
+            maxlength="12"
+            @keyup.enter="addTag"
+          />
+          <button class="m-btn-primary tag-add" @click="addTag" :disabled="!newTag.trim()">添加</button>
+        </div>
+
+        <button v-if="!isGuest && tagChanged" class="save-tags" @click="saveTags" :disabled="savingTags">
+          {{ savingTags ? '保存中…' : '保存标签' }}
+        </button>
       </div>
     </div>
 
-    <button class="delete-btn" @click="confirmDelete">
+    <button v-if="!isGuest" class="delete-btn" @click="confirmDelete">
       <span>🗑</span>
       <span>删除这件衣物</span>
     </button>
@@ -54,15 +82,38 @@
 </template>
 
 <script setup>
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 
 const emit = defineEmits(['navigate', 'back']);
 const app = inject('mobileApp');
 
 const item = computed(() => app.currentItem.value);
+const isGuest = computed(() => app.isGuest());
+
 const showDeleteConfirm = ref(false);
 const showMenu = ref(false);
+const tags = ref([]);
+const newTag = ref('');
+const savingTags = ref(false);
+const originalTags = ref([]);
+
+const parseTags = (raw) => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  return raw.split(',').map(t => t.trim()).filter(Boolean);
+};
+
+watch(() => item.value, (it) => {
+  const list = parseTags(it?.style);
+  tags.value = [...list];
+  originalTags.value = [...list];
+}, { immediate: true });
+
+const tagChanged = computed(() =>
+  tags.value.length !== originalTags.value.length ||
+  tags.value.some((t, i) => t !== originalTags.value[i])
+);
 
 const categoryMap = {
   short_sleeve: '短袖', long_sleeve: '长袖', hoodie: '卫衣', pants: '裤子',
@@ -78,11 +129,46 @@ const itemColor = computed(() => {
   if (/白/.test(c)) return '#F3F4F6';
   return '#9CA3AF';
 });
-const styleTags = computed(() => {
-  const raw = item.value?.style || item.value?.description || '';
-  if (Array.isArray(raw)) return raw.slice(0, 5);
-  return ['休闲', '百搭', '夏日'];
-});
+
+const addTag = () => {
+  const t = newTag.value.trim();
+  if (!t) return;
+  if (tags.value.includes(t)) {
+    ElMessage.warning('标签已存在');
+    return;
+  }
+  tags.value.push(t);
+  newTag.value = '';
+};
+const removeTag = (idx) => { tags.value.splice(idx, 1); };
+
+const saveTags = async () => {
+  if (!item.value?.id) return;
+  savingTags.value = true;
+  try {
+    const res = await fetch('/closet/items/tags', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...app.authHeaders()
+      },
+      body: JSON.stringify({ id: item.value.id, tags: tags.value })
+    });
+    const payload = await res.json();
+    if (res.ok && payload.code === 1) {
+      ElMessage.success('标签已保存');
+      originalTags.value = [...tags.value];
+      // 同步本地缓存，返回衣橱时列表能反映
+      app.setCurrentItem({ ...item.value, style: tags.value.join(',') });
+    } else {
+      ElMessage.error(payload.msg || '保存失败');
+    }
+  } catch {
+    ElMessage.error('保存失败');
+  } finally {
+    savingTags.value = false;
+  }
+};
 
 const addToTryOn = () => {
   if (!item.value) return;
@@ -102,13 +188,14 @@ const doDelete = async () => {
   try {
     const res = await fetch(`/closet/items?url=${encodeURIComponent(item.value.imageUrl)}`, {
       method: 'DELETE',
-      headers: { Authorization: localStorage.getItem('auth_token') || '' }
+      headers: app.authHeaders()
     });
     if (res.ok) {
       ElMessage.success('已删除');
       emit('back');
     } else {
-      ElMessage.error('删除失败');
+      const payload = await res.json().catch(() => ({}));
+      ElMessage.error(payload.detail || payload.msg || '删除失败');
     }
   } catch {
     ElMessage.error('删除错误');
@@ -128,8 +215,20 @@ const doDelete = async () => {
   margin-bottom: 16px;
 }
 
+.guest-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--m-primary-light);
+  color: var(--m-primary);
+  padding: 10px 14px;
+  border-radius: var(--m-radius-md);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
 .detail-image-card {
-  background: #E5E7EB;
+  background: #FFFFFF;
   border-radius: var(--m-radius-xl);
   aspect-ratio: 1 / 1;
   overflow: hidden;
@@ -141,7 +240,8 @@ const doDelete = async () => {
 .detail-image-card img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  padding: 8px;
 }
 
 .detail-body {
@@ -159,7 +259,7 @@ const doDelete = async () => {
 .meta-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 .meta-chip {
   display: inline-flex;
@@ -179,23 +279,64 @@ const doDelete = async () => {
   border: 1px solid rgba(0,0,0,0.1);
 }
 
-.style-section { margin-top: 8px; }
+.style-section { margin-top: 4px; }
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
 .section-label {
   font-size: 13px;
   color: var(--m-text-secondary);
-  margin: 0 0 10px;
+  margin: 0;
+}
+.changed-hint {
+  font-size: 12px;
+  color: var(--m-primary);
 }
 .style-tags {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  margin-bottom: 12px;
 }
 .style-tag {
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px 6px 14px;
   border-radius: 999px;
   font-size: 12px;
   color: var(--m-primary);
   background: var(--m-primary-light);
+}
+.empty-tag { font-size: 13px; color: var(--m-text-secondary); }
+.tag-del {
+  background: transparent;
+  border: none;
+  color: var(--m-primary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tag-input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.tag-input { flex: 1; }
+.tag-add { padding: 12px 18px; font-size: 14px; }
+.save-tags {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--m-radius-md);
+  border: none;
+  background: var(--m-dark);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
 }
 
 .delete-btn {

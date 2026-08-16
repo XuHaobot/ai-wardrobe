@@ -43,12 +43,35 @@ def get_db():
         db.close()
 
 
+def _ensure_columns():
+    """为已存在表补充模型新增的列（兼容 SQLite / MySQL，避免删数据重建）"""
+    try:
+        from sqlalchemy import inspect, text
+        inspector = inspect(engine)
+        if not inspector.has_table("closet_items"):
+            return
+        columns = [c["name"] for c in inspector.get_columns("closet_items")]
+        # 模型相对数据库新增的列 -> ALTER TABLE 补齐
+        expected = {
+            "style": "VARCHAR(200)",
+        }
+        for col, col_type in expected.items():
+            if col not in columns:
+                with engine.connect() as conn:
+                    conn.execute(text(f"ALTER TABLE closet_items ADD COLUMN {col} {col_type}"))
+                    conn.commit()
+                    print(f"[DB] 已为 closet_items 新增 {col} 列")
+    except Exception as e:
+        print(f"[WARN] 列迁移失败: {e}")
+
+
 def init_db():
     """初始化数据库表结构（带重试，应对云数据库临时断连）"""
     import time
     for attempt in range(3):
         try:
             Base.metadata.create_all(bind=engine)
+            _ensure_columns()
             return
         except Exception as e:
             if attempt < 2:

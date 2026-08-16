@@ -31,7 +31,8 @@
       </button>
     </div>
 
-    <p class="upload-hint">登录后可自动同步到衣橱</p>
+    <p class="upload-hint" v-if="isGuest">游客模式下无法上传，登录后可添加自己的衣物</p>
+    <p class="upload-hint" v-else>登录后可自动同步到衣橱</p>
 
     <div v-if="uploading" class="upload-progress">
       <div class="progress-bar"><div class="progress-fill" :style="{ width: progress + '%' }"></div></div>
@@ -41,7 +42,7 @@
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
+import { ref, inject, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 
 const emit = defineEmits(['navigate', 'back']);
@@ -51,9 +52,15 @@ const fileInput = ref(null);
 const uploading = ref(false);
 const progress = ref(30);
 
+const isGuest = computed(() => app.isGuest());
+
 const handleFile = async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
+  if (isGuest.value) {
+    ElMessage.warning('游客模式下无法上传衣物，请先登录');
+    return;
+  }
   if (!['image/jpeg', 'image/png'].includes(file.type)) {
     ElMessage.error('请上传 JPG 或 PNG 图片');
     return;
@@ -68,7 +75,7 @@ const handleFile = async (e) => {
 
     const res = await fetch('/items', {
       method: 'POST',
-      headers: { Authorization: localStorage.getItem('auth_token') || '' },
+      headers: app.authHeaders(),
       body: formData
     });
 

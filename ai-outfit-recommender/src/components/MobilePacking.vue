@@ -62,10 +62,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { ElMessage } from 'element-plus';
 
 const emit = defineEmits(['back']);
+const app = inject('mobileApp');
 
 const city = ref('');
 const days = ref(3);
@@ -89,7 +90,7 @@ const generate = async () => {
       purpose: purpose.value || '',
     });
     const res = await fetch(`/recommend/packing?${qs.toString()}`, {
-      headers: { Authorization: localStorage.getItem('auth_token') || '' }
+      headers: app.authHeaders()
     });
     const payload = await res.json();
     const data = payload?.data ?? payload;

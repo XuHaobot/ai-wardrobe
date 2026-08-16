@@ -107,6 +107,7 @@ class ClosetService:
                     "category": item.category or "all",
                     "color": item.color or "",
                     "season": item.season or "",
+                    "style": item.style or "",
                 }
                 for item in items
             ],
@@ -167,6 +168,20 @@ class ClosetService:
             return False
         # 在描述前插入名称标记
         item.description = f"名称: {name}\n{item.description or ''}"
+        db.commit()
+        return True
+
+    @staticmethod
+    def update_tags(db: Session, user_id: int, item_id: int, tags: list[str]) -> bool:
+        """更新衣物风格标签"""
+        item = db.query(ClosetItem).filter(
+            ClosetItem.id == item_id,
+            ClosetItem.user_id == user_id,
+        ).first()
+        if not item:
+            return False
+        valid = [t.strip() for t in tags if t and t.strip()]
+        item.style = ",".join(valid[:20])
         db.commit()
         return True
 

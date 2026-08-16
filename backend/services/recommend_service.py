@@ -3,8 +3,10 @@
 """
 import re
 import json
+import httpx
 from sqlalchemy.orm import Session
 from utils.ai_recommend import generate_recommendation
+from utils.ai_weather import get_weather
 from services.closet_service import ClosetService, _extract_name
 from config import get_settings
 

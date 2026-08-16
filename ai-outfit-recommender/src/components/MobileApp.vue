@@ -41,7 +41,7 @@ import MobileHistory from './MobileHistory.vue';
 
 const tabs = [
   { name: 'wardrobe', label: '衣橱', icon: '👗' },
-  { name: 'tryon', label: '试穿', icon: '🪞' },
+  { name: 'tryon', label: '试穿', icon: '🎨' },
   { name: 'assistant', label: '助手', icon: '✨' },
 ];
 
@@ -68,6 +68,13 @@ const allClosetItems = ref([]);
 const selectedItems = ref([]);
 const currentItem = ref(null);
 const currentOutfitResult = ref(null);
+
+const isGuest = () => !localStorage.getItem('auth_token');
+const authHeaders = () => {
+  const token = localStorage.getItem('auth_token') || '';
+  return token ? { Authorization: token } : { 'X-Guest': '1' };
+};
+const myOutfit = ref([]); // 用户自行添加的「我的搭配」单品
 
 const isTabPage = computed(() => tabs.some(t => t.name === currentPage.value));
 const currentComponent = computed(() => pageComponents[currentPage.value] || MobileAssistant);
@@ -110,6 +117,14 @@ provide('mobileApp', {
   setSelectedItems: (items) => { selectedItems.value = items; },
   setCurrentItem: (item) => { currentItem.value = item; },
   setOutfitResult: (result) => { currentOutfitResult.value = result; },
+  isGuest,
+  authHeaders,
+  myOutfit,
+  addToOutfit: (item) => {
+    if (!myOutfit.value.some(i => i.id === item.id)) myOutfit.value = [...myOutfit.value, item];
+  },
+  removeFromOutfit: (item) => { myOutfit.value = myOutfit.value.filter(i => i.id !== item.id); },
+  clearOutfit: () => { myOutfit.value = []; },
   navigate: handleNavigate,
   back: handleBack,
   switchTab,

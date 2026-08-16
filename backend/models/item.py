@@ -18,5 +18,6 @@ class ClosetItem(Base):
     color = Column(String(50), nullable=True, comment="颜色")
     season = Column(String(20), nullable=True, comment="适用季节")
     thickness = Column(String(20), nullable=True, comment="厚度")
+    style = Column(String(200), nullable=True, comment="风格标签，逗号分隔")
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)

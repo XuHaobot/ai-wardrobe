@@ -135,31 +135,32 @@ const enterGuest = () => {
 </script>
 
 <style scoped>
-.login-page { padding-top: 12px; background: var(--m-bg); }
+.login-page {
+  padding-top: 12px;
+  background: var(--m-bg);
+  padding-bottom: 24px;
+}
 
 .page-header { margin-bottom: 20px; }
 
 .login-body {
-  background: var(--m-card);
-  border-radius: var(--m-radius-xl);
-  padding: 28px 20px;
-  box-shadow: var(--m-shadow);
+  padding: 8px 4px;
 }
 
-.login-titles { text-align: center; margin-bottom: 24px; }
-.login-title { font-size: 26px; font-weight: 700; color: var(--m-text); margin: 0 0 6px; }
-.login-subtitle { font-size: 14px; color: var(--m-text-secondary); margin: 0; }
+.login-titles { text-align: center; margin-bottom: 32px; }
+.login-title { font-size: 30px; font-weight: 800; color: var(--m-text); margin: 0 0 8px; letter-spacing: -0.5px; }
+.login-subtitle { font-size: 15px; color: var(--m-text-secondary); margin: 0; }
 
 .login-tabs {
   display: flex;
   background: var(--m-border);
   border-radius: var(--m-radius-xl);
   padding: 4px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 .login-tab {
   flex: 1;
-  padding: 10px 0;
+  padding: 11px 0;
   border-radius: var(--m-radius-xl);
   border: none;
   background: transparent;
@@ -167,21 +168,28 @@ const enterGuest = () => {
   font-weight: 500;
   color: var(--m-text-secondary);
   cursor: pointer;
+  transition: all 0.2s;
 }
 .login-tab.active {
   background: var(--m-primary);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(240, 90, 140, 0.25);
 }
 
 .login-form { display: flex; flex-direction: column; gap: 8px; }
-.field-label { font-size: 13px; font-weight: 500; color: var(--m-text); margin-top: 4px; }
-.submit-btn { margin-top: 12px; }
+.field-label { font-size: 14px; font-weight: 600; color: var(--m-text); margin-top: 8px; }
+.submit-btn {
+  margin-top: 18px;
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+}
 
 .divider {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 20px 0;
+  margin: 24px 0;
   color: var(--m-text-secondary);
   font-size: 13px;
 }
@@ -200,14 +208,17 @@ const enterGuest = () => {
   justify-content: center;
   gap: 8px;
   padding: 14px;
-  background: transparent;
+  background: var(--m-card);
   border: 1px solid var(--m-border);
   border-radius: var(--m-radius-xl);
   font-size: 15px;
+  font-weight: 500;
   color: var(--m-text);
   cursor: pointer;
+  transition: all 0.2s;
 }
-.guest-icon { color: var(--m-primary); }
+.guest-btn:active { background: var(--m-border); transform: scale(0.99); }
+.guest-icon { color: var(--m-primary); font-size: 18px; }
 .guest-tip {
   text-align: center;
   font-size: 12px;

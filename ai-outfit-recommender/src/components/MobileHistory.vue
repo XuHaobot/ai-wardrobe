@@ -6,6 +6,11 @@
       <div class="header-spacer"></div>
     </header>
 
+    <div v-if="isGuest" class="guest-banner">
+      <span>✨</span>
+      <span>游客模式下显示示例搭配，登录后可查看真实历史</span>
+    </div>
+
     <div class="history-tabs">
       <button
         v-for="tab in tabs"
@@ -49,6 +54,8 @@ import { ElMessage } from 'element-plus';
 const emit = defineEmits(['navigate', 'back']);
 const app = inject('mobileApp');
 
+const isGuest = computed(() => app.isGuest());
+
 const tabs = [
   { value: 'all', label: '全部' },
   { value: 'daily', label: '日常' },
@@ -78,13 +85,12 @@ const tagClass = (type) => {
 const fetchHistory = async () => {
   loading.value = true;
   try {
-    const token = localStorage.getItem('auth_token') || '';
-    if (!token) {
+    if (isGuest.value) {
       list.value = mockList();
       return;
     }
     const res = await fetch('/outfit/history', {
-      headers: { Authorization: token }
+      headers: app.authHeaders()
     });
     const payload = await res.json();
     const data = payload?.data ?? payload;
@@ -127,6 +133,18 @@ onMounted(fetchHistory);
 
 <style scoped>
 .history-page { padding-top: 12px; }
+
+.guest-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--m-primary-light);
+  color: var(--m-primary);
+  padding: 10px 14px;
+  border-radius: var(--m-radius-md);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
 
 .page-header {
   display: flex;
