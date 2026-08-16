@@ -160,6 +160,7 @@ provide('mobileApp', {
 }
 
 .tab-item {
+  position: relative;
   flex: 1;
   height: 100%;
   display: flex;
@@ -171,7 +172,7 @@ provide('mobileApp', {
   background: transparent;
   color: var(--m-text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: color 0.2s;
 }
 
 .tab-item.active {
@@ -179,8 +180,30 @@ provide('mobileApp', {
 }
 
 .tab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
   font-size: 22px;
   line-height: 1;
+  transition: all 0.2s;
+}
+
+.tab-item.active .tab-icon {
+  background: var(--m-primary-light);
+  transform: scale(1.08);
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 7px;
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--m-primary);
 }
 
 .tab-label {
