@@ -1,148 +1,98 @@
-# AI 智能衣橱 (AI Smart Wardrobe)
+# AI 智能衣橱 · 移动端 App 版 (Mobile H5)
 
-> 基于多模态大模型的个性化穿搭推荐 + 虚拟试穿全栈应用  
-> FastAPI + Vue3 + ChromaDB + 通义千问 VL + 即梦生图
+> 基于多模态大模型的个性化穿搭推荐 + 虚拟试穿 **移动端应用**  
+> FastAPI + Vue3 + 通义千问 VL + 即梦生图 · 前端按 9 张移动端设计稿重做
 
-[![Python](https://img.shields.io/badge/Python-3.12+-blue)](https://www.python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green)](https://fastapi.tiangolo.com)
+[![Branch](https://img.shields.io/badge/branch-mobile--redesign-pink)](https://github.com/XuHaobot/ai-wardrobe/tree/mobile-redesign)
 [![Vue](https://img.shields.io/badge/Vue-3.5-brightgreen)](https://vuejs.org)
 [![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 
 ---
 
-## 项目概述
+## ⚠️ 这是移动端版本
 
-**AI 智能衣橱** 是一个完整的全栈 AI 应用，让用户上传自己的衣物图片，系统自动识别衣物属性，
-提供**语义搜索**、**天气感知穿搭推荐**、**AI 智能对话**、**虚拟试穿**四大核心能力。
+本 README 对应的是 **`mobile-redesign` 分支**，是项目的**移动端 App 化重构版**：
+底部 Tab 导航（衣橱 / 试穿 / 助手）、全屏单页流、游客与登录身份隔离、衣物标签编辑等。
 
-### 效果展示
+- **桌面端（三栏原版）**：在 `main` 分支，README 见 https://github.com/XuHaobot/ai-wardrobe/blob/main/README.md
+- **移动端（本版）**：在 `mobile-redesign` 分支，即当前文档所在分支
 
-#### 1. 衣橱管理 + 智能推荐
-![衣橱管理](screenshots/wardrobe.png)
-
-#### 2. 虚拟试穿效果
-![虚拟试穿](screenshots/tryon.png)
+两个分支并存、互不覆盖。克隆后想看哪版就切哪条分支（`git checkout main` / `git checkout mobile-redesign`）。
 
 ---
 
-## 核心能力
+## 移动端功能一览
 
-| 能力 | 实现细节 |
-|------|----------|
-| **多模态衣物识别** | 上传图片后自动用通义千问 VL 识别颜色/类别/材质，存数据库 |
-| **向量语义搜索** | DashScope text-embedding-v3 + ChromaDB，支持「找一件适合春天的外套」式查询 |
-| **天气感知推荐** | 集成高德天气 API，根据城市天气 + 出行场景推荐穿搭 |
-| **AI 智能对话** | Agent + Function Calling，支持多轮对话 + SSE 流式输出 |
-| **虚拟试穿** | DashScope aitryon 模型 + 即梦生图，自动加载男/女模特底图 |
-| **JWT 用户系统** | 注册/登录/Token 认证，bcrypt 密码加密 |
+底部三个 Tab 导航：
 
----
+| Tab | 名称 | 内容 |
+|-----|------|------|
+| 👗 | **衣橱** | 分类筛选、网格浏览、点选衣物去试穿、衣物详情（标签增删改） |
+| 🎨 | **试穿** | 男/女模特底图、选衣物一键试穿、试穿结果预览 |
+| ✨ | **助手** | 天气卡片、场景入口、AI 穿搭对话推荐 |
 
-## 技术架构
+二级页面：登录/注册、衣物上传、搭配结果（逐件添加进「我的搭配」）、衣物详情、旅行打包、我的搭配历史。
 
-```
-┌────────────────────────────────────────────────────┐
-│  前端 (Vue 3 + Vite + Element Plus)                │
-│  ├─ 登录/注册 (JWT)                                │
-│  ├─ 衣橱管理 (上传/分类/搜索)                       │
-│  ├─ 天气组件 (高德 IP 定位)                         │
-│  ├─ 虚拟试穿展示                                    │
-│  └─ AI 对话面板 (SSE 流式)                          │
-└─────────────────┬──────────────────────────────────┘
-                  │ Vite Proxy (port 8000)
-┌─────────────────▼──────────────────────────────────┐
-│  后端 (Python FastAPI)                              │
-│  ├─ /auth    JWT 认证                              │
-│  ├─ /items   衣物上传 + AI 识别                     │
-│  ├─ /closet  衣橱管理 + 向量搜索                    │
-│  ├─ /recommend 天气感知推荐                         │
-│  ├─ /tryon   虚拟试穿 (DashScope aitryon)          │
-│  ├─ /weather 天气查询 (高德代理)                    │
-│  └─ /api/chat 多轮对话 + Function Calling          │
-└─────────────────┬──────────────────────────────────┘
-                  │
-       ┌──────────┼──────────┬─────────────┐
-       ▼          ▼          ▼             ▼
-   ChromaDB   SQLite    腾讯云COS      DashScope
-   (向量索引)  (元数据)   (衣物图存储)   (多模态/Embedding)
-```
+### 核心交互说明
+
+- **搭配 = 用户自己拼**：AI 推荐的单品逐件显示「＋添加」按钮，你点选后才进入「我的搭配」；添加 ≥1 件后才出现「我的搭配」区块（不预留空方案）。底部「试穿这套 / 保存搭配」都基于你选入的单品。
+- **试穿 Tab 图标**：🎨（用户指定）。
+- **模特底图**：试穿舞台无结果时直接显示男/女模特底图（`/uploads/男.png`、`/uploads/女.png`），已随仓库提供。
+- **衣物标签编辑**：在衣物详情页可新增 / 删除 / 保存标签（登录用户可写，游客仅预览）。
+- **衣橱图片完整显示**：`object-fit: contain`，衣物不被裁切。
 
 ---
 
-## 目录结构
+## 游客模式 vs 登录用户（身份隔离）
+
+- **游客试玩**：登录页点「游客试玩」，或首页无 token 时自动以游客身份进入。后端映射到演示账号的预置示例衣橱，开箱即有衣物可体验。
+- **权限边界**：游客可体验 AI 推荐、虚拟试穿、智能搜索、浏览搭配历史；**上传 / 删除 / 改标签 / 保存搭配** 等写操作一律 `403`，并提示「游客模式下无法…，请先登录」。
+- **登录后**：写操作、个人衣橱、个人搭配历史全部恢复。
+- 衣橱 / 历史页顶部有「游客试玩中…」banner 明确当前身份。
+
+---
+
+## 技术架构（移动端部分）
+
+前端用**响应式断点**自动切换桌面 / 移动：
 
 ```
-aitryon/
-├── backend/                          # Python FastAPI 后端
-│   ├── main.py                       # FastAPI 入口
-│   ├── config.py                     # 配置管理（pydantic-settings）
-│   ├── database.py                   # SQLAlchemy ORM
-│   ├── .env.example                  # 环境变量模板
-│   ├── requirements.txt              # Python 依赖
-│   ├── agent/                        # Agent 模块
-│   │   ├── core.py                   # LLM 调用 + Function Calling
-│   │   ├── tools.py                  # 工具定义
-│   │   ├── tool_executor.py          # 工具执行器
-│   │   └── memory.py                 # 多轮对话记忆
-│   ├── routers/                      # API 路由
-│   │   ├── auth.py                   # 用户认证
-│   │   ├── closet.py                 # 衣橱管理
-│   │   ├── recommend.py              # 推荐
-│   │   ├── tryon.py                  # 虚拟试穿
-│   │   ├── weather.py                # 天气
-│   │   └── chat.py                   # AI 对话
-│   ├── services/                     # 业务逻辑
-│   │   ├── closet_service.py         # 衣橱服务
-│   │   ├── cos_storage.py            # 腾讯云 COS
-│   │   ├── recommend_service.py      # 推荐服务
-│   │   ├── tryon_service.py          # 试穿服务
-│   │   ├── user_service.py           # 用户服务
-│   │   └── vector_store.py           # ChromaDB 向量库
-│   ├── models/                       # ORM 模型
-│   ├── schemas/                      # Pydantic Schema
-│   └── utils/                        # 工具类
-│       ├── ai_recommend.py           # AI 推荐 Prompt
-│       ├── ai_tryon.py               # AI 试穿封装
-│       ├── ai_util.py                # AI 通用工具
-│       ├── ai_weather.py             # 高德天气调用
-│       └── jwt_util.py               # JWT 工具
-│
-├── ai-outfit-recommender/            # 前端 (Vue 3 + Vite)
-│   ├── index.html
-│   ├── vite.config.js                # Vite 配置（含 8000 端口代理）
-│   ├── package.json
-│   ├── .env.example                  # 前端环境变量模板
-│   ├── public/
-│   │   └── vite.svg
-│   └── src/
-│       ├── main.js                   # Vue 入口
-│       ├── App.vue                   # 根组件
-│       ├── style.css
-│       ├── router/index.js           # 路由
-│       ├── views/
-│       │   ├── HomeView.vue          # 主页（三栏布局）
-│       │   └── LoginView.vue         # 登录/注册
-│       └── components/
-│           ├── UploadInput.vue       # 上传衣物
-│           ├── ClosetManager.vue     # 衣橱网格
-│           ├── OutfitDisplay.vue     # 试穿展示
-│           ├── RoleManager.vue       # 男/女模特切换
-│           ├── WeatherWidget.vue     # 天气组件
-│           ├── WeatherInput.vue      # 城市输入
-│           ├── RecommendationList.vue # 推荐列表
-│           └── ChatPanel.vue         # AI 对话面板
-│
-├── screenshots/                      # README 截图
-│   ├── wardrobe.png
-│   ├── tryon.png
-│   ├── model_male.png                # 男模特底图
-│   └── model_female.png              # 女模特底图
-│
-├── .env.example                      # 全局环境变量模板
-├── .gitignore                        # Git 忽略规则
-├── 代码审查报告.md                    # 项目代码审查报告
-└── 前端对接指南.md                    # 前端对接后端说明
+HomeView.vue
+  ├─ isMobile > 768px  → 原三栏桌面版（与 main 分支一致）
+  └─ isMobile ≤ 768px  → MobileApp.vue（本分支新增的移动端壳）
+                          ├─ 底部 Tab：衣橱 / 试穿 / 助手
+                          └─ provide 共享状态：currentRole / myOutfit / authHeaders / isGuest ...
 ```
+
+后端与桌面端共用同一套 FastAPI（端口 8000），无需为移动端单独部署后端。
+
+---
+
+## 目录结构（移动端相关）
+
+```
+ai-outfit-recommender/src/
+├── views/HomeView.vue              # 主页，按 isMobile 断点切换桌面/移动
+├── style.css                       # 移动端设计系统（主色 #F05A8C、背景 #F9FAFB 等）
+└── components/
+    ├── MobileApp.vue               # 移动端壳：底部 Tab + 页面栈 + 共享状态
+    ├── MobileLogin.vue             # 登录 / 注册 / 游客（按设计稿去卡片重绘）
+    ├── MobileWardrobe.vue          # 衣橱：分类筛选 + 网格 + 选中
+    ├── MobileItemDetail.vue        # 衣物详情：大图 + 标签增删改 + 删除
+    ├── MobileTryOn.vue             # 试穿：性别切换 + 模特底图 + 试穿
+    ├── MobileOutfitResult.vue      # 搭配结果：逐件添加 + 我的搭配
+    ├── MobileUpload.vue            # 衣物上传：拍照 / 相册
+    ├── MobilePacking.vue           # 旅行打包清单
+    ├── MobileHistory.vue           # 我的搭配历史
+    └── MobileAssistant.vue         # AI 助手：天气卡 + 场景 + 对话推荐
+```
+
+后端关键改动（本分支已含）：
+- `backend/models/item.py`：衣物新增 `style` 标签字段
+- `backend/database.py`：引擎无关列迁移（SQLite / MySQL 均补 `style` 列）
+- `backend/services/closet_service.py`：`update_tags()`
+- `backend/routers/closet.py`：`PUT /closet/items/tags`
+- `backend/services/recommend_service.py`：修复旅行打包 `get_weather` / `httpx` 缺失导致的崩溃
 
 ---
 
@@ -150,25 +100,21 @@ aitryon/
 
 ### 1. 准备 API Key
 
-注册以下服务并获取 Key：
-
 | 服务 | 用途 | 获取地址 |
 |------|------|----------|
-| **DashScope**（通义千问）| 多模态识别 / Embedding / 对话 | https://dashscope.console.aliyun.com |
+| **DashScope**（通义千问）| 多模态识别 / Embedding / 对话 / 试穿 | https://dashscope.console.aliyun.com |
 | **高德开放平台** | 天气查询 / IP 定位 | https://lbs.amap.com |
-| **火山引擎**（即梦）| 试穿生图（可选）| https://www.volcengine.com |
-| **腾讯云 COS** | 衣物图云存储（可选）| https://console.cloud.tencent.com/cos |
 
-### 2. 启动后端
+> 仅演示 / 游客试玩可不填 Key：后端走演示账号示例衣橱，AI 增强类功能（识衣、真实推荐、试穿出图）需填 `DASHSCOPE_API_KEY`。
+
+### 2. 启动后端（端口 8000）
 
 ```bash
 cd backend
 python -m venv venv
-.\venv\Scripts\activate        # Windows
-# source venv/bin/activate     # macOS/Linux
-
+.\venv\Scripts\activate          # Windows
 pip install -r requirements.txt
-cp .env.example .env           # 填入真实 Key
+cp .env.example .env            # 填入真实 Key
 python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
@@ -177,146 +123,98 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```bash
 cd ai-outfit-recommender
 npm install
-cp .env.example .env           # 填入 VITE_AMAP_KEY
+cp .env.example .env            # 填入 VITE_AMAP_KEY（天气用，可选）
 npm run dev
 ```
 
-### 4. 浏览器访问
+### 4. 用手机视图预览
 
-打开 http://localhost:5173，注册账号即可使用。
+打开 http://localhost:5173 ，切到**移动视图**二选一：
 
-> 💡 **演示衣橱图片已随仓库提供**：`backend/uploads/` 下 16 张示例衣物图与男/女模特底图（`女.png` / `男.png`）已提交进 Git。克隆后首次启动 `ensure_demo_closet()` 会自动把示例衣物写入演示账号衣橱，无需任何额外操作即可看到完整界面与模特底图。
+- **浏览器 DevTools 设备模式**：F12 → 点「切换设备工具栏」(Ctrl+Shift+M) → 顶部选 iPhone / Pixel，或手动输 `390 × 844`。
+- **真机访问**：手机与电脑同一局域网，浏览器开 `http://<电脑局域网IP>:5173`。
 
-### 常见问题 / 排错
+窗口宽度 **≤768px** 时自动渲染移动端 `MobileApp.vue`；拉宽即回到桌面三栏版。
 
-- **衣橱空白 / 图片裂图**：后端必须运行在 **8000 端口**，且与前端 `ai-outfit-recommender/vite.config.js` 的代理目标 `http://127.0.0.1:8000` 一致。若后端跑在别的端口，前端请求会全部打空，衣橱显示 0 件。
-- **启动报 `pydantic ... Extra inputs are not permitted (volc_access_key)`**：`VOLC_*` 系列配置已从代码移除（未被任何功能调用），请勿在 `.env` 中填写 `VOLC_ACCESS_KEY / VOLC_SECRET_KEY / VOLC_JIMENG_MODEL`；若必须保留这些键，需在 `backend/config.py` 的 `Settings` 中补回这三个字段。
-- **虚拟试穿无效果**：试穿依赖 DashScope `aitryon` 模型，需在 `.env` 填入 `DASHSCOPE_API_KEY`；模特底图已随仓库提供，缺 Key 时仅无试穿出图，其余功能正常。
-- **AI 识别 / 推荐无输出**：同上，需在 `.env` 填入 `DASHSCOPE_API_KEY`，否则走游客演示模式（仅示例衣橱，无 AI 增强）。
+> 💡 **演示衣橱图片已随仓库提供**：`backend/uploads/` 下 16 张示例衣物图与男/女模特底图（`女.png` / `男.png`）已提交进 Git。首次启动 `ensure_demo_closet()` 自动写入演示账号衣橱，无需额外操作即可看到完整界面与模特底图。
 
 ---
 
-## 关键 API 一览
+## 关键 API（移动端调用）
 
-| 方法 | 路径 | 功能 | 鉴权 |
-|------|------|------|------|
-| POST | `/users/register` | 注册 | 否 |
-| POST | `/users/login` | 登录 → 返回 JWT | 否 |
-| POST | `/items` | 上传衣物（multipart image） | 是 |
-| GET | `/closet/items?page=1&size=1000` | 衣橱列表 | 是 |
-| DELETE | `/closet/items?url=xxx` | 删除衣物 | 是 |
-| PUT | `/closet/items/name` | 重命名衣物 | 是 |
-| GET | `/closet/search?q=xxx` | 语义搜索衣物 | 是 |
-| GET | `/recommend?city=上海&purpose=日常` | AI 推荐穿搭 | 是 |
-| POST | `/tryon` | 虚拟试穿 `{gender, clothingUrls}` | 是 |
-| GET | `/weather?city=上海` | 天气查询 | 否 |
-| POST | `/api/chat` | AI 对话 | 是 |
-| POST | `/api/chat/stream` | AI 对话 SSE 流 | 是 |
-| GET | `/uploads/xxx.jpg` | 静态文件 | 否 |
+| 方法 | 路径 | 功能 | 游客可用 |
+|------|------|------|----------|
+| POST | `/users/register` `/users/login` | 注册 / 登录 | 否（游客走 X-Guest） |
+| GET | `/closet/items` | 衣橱列表 | ✅（演示衣橱） |
+| POST | `/items` | 上传衣物 | ❌ 需登录（游客 403） |
+| DELETE | `/closet/items` | 删除衣物 | ❌ 需登录 |
+| PUT | `/closet/items/tags` | 编辑标签 | ❌ 需登录 |
+| GET | `/recommend` | AI 推荐穿搭 | ✅ |
+| POST | `/tryon` | 虚拟试穿 `{gender, clothingUrls}` | ✅ |
+| GET | `/recommend/packing` | 旅行打包清单 | ✅ |
+| GET | `/outfit/history` | 我的搭配历史 | 登录返回个人，游客返回示例 |
 
-**统一响应格式：**
-```json
-{ "code": 1, "message": "success", "data": { ... } }
-```
+**统一响应格式：** `{ "code": 1, "message": "success", "data": { ... } }`
 
 ---
 
-## 核心流程
+## 常见问题 / 排错
 
-### 衣物上传识别
-```
-用户上传图片
-  → 后端 multipart 接收
-  → 可选：上传到腾讯云 COS（持久化）
-  → 调用 DashScope qwen-vl-plus 识别
-  → 提取 category/color/material 等字段
-  → 存 SQLAlchemy（SQLite/MySQL）
-  → 写入 ChromaDB 向量索引
-  → 返回衣物记录（含 COS URL）
-```
-
-### 虚拟试穿
-```
-用户选衣物 + 选模特
-  → 后端加载模特底图（uploads/男.png 或 女.png）
-  → 衣物图片 + 模特上传到 DashScope 临时存储
-  → 调用 aitryon 异步任务
-  → 轮询任务结果（最长 180s）
-  → 保存试穿结果到 uploads/tryon_xxx.jpg
-  → 返回结果 URL
-```
-
-### AI 智能对话
-```
-用户输入问题
-  → 后端加载会话历史（Memory）
-  → 调用 LLM（qwen-plus）+ Function Calling
-  → LLM 自主决定调工具（查衣橱/查天气/推荐等）
-  → 流式返回（SSE）每个 token
-  → 前端实时渲染
-```
+- **衣橱空白 / 裂图**：后端必须跑在 **8000 端口**，与前端 `vite.config.js` 代理 `http://127.0.0.1:8000` 一致；否则衣橱显示 0 件。
+- **移动端没出现**：浏览器窗口宽度需 ≤768px（DevTools 设备模式最稳）。
+- **试穿无出图**：需在 `.env` 填 `DASHSCOPE_API_KEY`，模特底图已随仓库提供，缺 Key 时仅无试穿出图，其余正常。
+- **旅行打包报错**：本分支已修复 `get_weather` / `httpx` 缺失，确保用的是 `mobile-redesign` 分支代码。
 
 ---
 
-## 安全配置
+## 🔄 如何更新并推送到 GitHub（mobile-redesign 分支）
 
-**所有 API Key 都通过 `.env` 注入，不硬编码在源码中。**
+> 你平时改移动端，都在 **`mobile-redesign` 分支** 上操作，不要碰 `main`，这样桌面端原版永远不会被覆盖。
 
-`.gitignore` 已排除：
-- `backend/.env`、`backend/uploads/`、`backend/data/`（含 ChromaDB 和 SQLite）
-- `ai-outfit-recommender/.env`、`node_modules/`、`dist/`
-- 所有 `__pycache__/`、`venv/`、`.vscode/`
+### 本地改完，提交并推送
 
-**部署到生产前必做：**
-1. 修改 `JWT_SECRET` 为长随机字符串
-2. 高德 API Key 申请时设置**域名白名单**
-3. 数据库切换到 MySQL/PostgreSQL
-4. 启用 HTTPS
+```bash
+# 1. 确认在移动端分支
+git branch --show-current          # 应为 mobile-redesign
 
----
+# 2. 看改动
+git status
 
-## 游客试玩模式
+# 3. 添加改动文件（不要加 dist_bak_*、node_modules、venv）
+git add ai-outfit-recommender/src/...   backend/...
 
-为求职展示/公网 demo 设计，无需注册即可体验完整产品：
+# 4. 提交
+git commit -m "feat: 移动端 xxx 优化"
 
-- **进入方式**：登录页点击「游客试玩」，或首页在无 token 时自动以游客身份访问。
-- **身份隔离**：游客请求带 `X-Guest: 1`，后端映射到演示账号（`demo_user_id`，默认 1）的预置示例衣橱，开箱即有衣物可选。
-- **权限边界**：游客可体验 AI 推荐、虚拟试穿、智能搜索、AI 对话、浏览搭配历史；**上传/删除/改名/保存搭配**等写操作一律 `403`，杜绝数据污染与 token 滥用。
-- **演示衣橱**：服务启动时 `ensure_demo_closet()` 自动为演示账号预置覆盖全品类的示例衣物（不调用 AI 识别，零 token 消耗）。
-- **登录后**：写操作、个人衣橱、个人搭配历史全部恢复。
+# 5. 推到远程移动端分支（只推这个分支，不推 main）
+git push origin mobile-redesign
+```
 
-## 已知限制
+### 切回桌面端看看
 
-- ChromaDB 数据存储在 `data/chroma/`，迁移时需整目录复制
-- 高德免费配额：每日 5000 次 IP 定位
-- DashScope 试穿模型：约 5-15 秒/次
-- 当前试穿模型在「长袖+长裤」等复杂组合上效果待提升
+```bash
+git checkout main          # 桌面三栏原版
+git checkout mobile-redesign   # 回到移动端
+```
 
----
+### 想让桌面端也同步移动端的某次改动（可选）
 
-## 路线图
+```bash
+git checkout mobile-redesign
+git log --oneline -5               # 复制要同步的 commit hash
+git checkout main
+git cherry-pick <commit-hash>      # 把那次改动摘到 main
+# 或整体合并：git merge mobile-redesign   （合并前请确认有意覆盖桌面端）
+```
 
-- [x] 多模态衣物识别
-- [x] 向量语义搜索
-- [x] 天气感知推荐
-- [x] 虚拟试穿
-- [x] AI 多轮对话
-- [x] 游客试玩模式（预置示例衣橱 + 匿名身份，进首页即有衣物可体验）
-- [x] 衣物搭配历史记录（登录用户可保存/查看/删除搭配）
-- [x] 旅行场景打包推荐（胶囊衣橱清单生成）
-- [x] 移动端 H5 适配（≤768px 单列可滚动：衣橱→试穿→AI助手，顶栏换行、历史抽屉全屏、衣橱网格降列、试穿图自适应）
-- [ ] 多用户社交分享
+> ⚠️ **不要** 执行 `git push origin main`，除非你确实想把移动端改动并入桌面端原版。本仓库约定：`main` = 桌面端，`mobile-redesign` = 移动端，各自独立。
 
-## 模型与 API Key 策略
+### 本机首次拉取已推送的分支
 
-**统一使用阿里云 DashScope 单密钥（`DASHSCOPE_API_KEY`）**，覆盖全部 AI 能力：
-
-- 衣物识别：`qwen-vl-plus`（多模态）
-- 对话 / 推荐：`qwen-plus` / `qwen-vl`
-- 向量语义检索：`text-embedding-v3`
-- 虚拟试穿：DashScope `aitryon` 专用试穿模型
-
-> 早期预留的「火山引擎即梦」配置（`VOLC_ACCESS_KEY` 等）已确认未被任何代码调用，已从 `config.py` 与 `.env.example` 中移除。公网 demo 不提供「通义 / 即梦」二选一开关——避免访客被迫持有两套密钥、增加 BYOK 摩擦；如需扩展其他生图供应商，仅在 `backend/utils/ai_tryon.py` 内部替换 provider 即可，对前端无感。
+```bash
+git fetch
+git checkout -b mobile-redesign origin/mobile-redesign   # 首次需关联
+```
 
 ---
 
