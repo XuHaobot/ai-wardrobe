@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     qwen_vl_model: str = "qwen-vl-plus"
     qwen_text_model: str = "qwen-plus"
     qwen_embedding_model: str = "text-embedding-v3"
+    # 火山引擎即梦（预留 provider，当前代码未调用，加载备用）
+    volc_access_key: str = ""
+    volc_secret_key: str = ""
+    volc_jimeng_model: str = ""
     # 上传目录
     upload_dir: str = str(_BACKEND_DIR / "uploads")
     # 游客/演示模式：演示账号 user_id（衣橱预置示例衣物）

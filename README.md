@@ -185,6 +185,15 @@ npm run dev
 
 打开 http://localhost:5173，注册账号即可使用。
 
+> 💡 **演示衣橱图片已随仓库提供**：`backend/uploads/` 下 16 张示例衣物图与男/女模特底图（`女.png` / `男.png`）已提交进 Git。克隆后首次启动 `ensure_demo_closet()` 会自动把示例衣物写入演示账号衣橱，无需任何额外操作即可看到完整界面与模特底图。
+
+### 常见问题 / 排错
+
+- **衣橱空白 / 图片裂图**：后端必须运行在 **8000 端口**，且与前端 `ai-outfit-recommender/vite.config.js` 的代理目标 `http://127.0.0.1:8000` 一致。若后端跑在别的端口，前端请求会全部打空，衣橱显示 0 件。
+- **启动报 `pydantic ... Extra inputs are not permitted (volc_access_key)`**：`VOLC_*` 系列配置已从代码移除（未被任何功能调用），请勿在 `.env` 中填写 `VOLC_ACCESS_KEY / VOLC_SECRET_KEY / VOLC_JIMENG_MODEL`；若必须保留这些键，需在 `backend/config.py` 的 `Settings` 中补回这三个字段。
+- **虚拟试穿无效果**：试穿依赖 DashScope `aitryon` 模型，需在 `.env` 填入 `DASHSCOPE_API_KEY`；模特底图已随仓库提供，缺 Key 时仅无试穿出图，其余功能正常。
+- **AI 识别 / 推荐无输出**：同上，需在 `.env` 填入 `DASHSCOPE_API_KEY`，否则走游客演示模式（仅示例衣橱，无 AI 增强）。
+
 ---
 
 ## 关键 API 一览
