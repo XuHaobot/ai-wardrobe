@@ -98,3 +98,148 @@ body {
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow-sm) !important;
 }
+
+/* ============================================================
+   移动端 App 设计系统
+   ============================================================ */
+:root {
+  --m-primary: #F05A8C;
+  --m-primary-dark: #D9467A;
+  --m-primary-light: #FFF0F5;
+  --m-accent-orange: #FFA07A;
+  --m-dark: #1F2937;
+  --m-bg: #F9FAFB;
+  --m-card: #FFFFFF;
+  --m-text: #111827;
+  --m-text-secondary: #9CA3AF;
+  --m-text-tertiary: #D1D5DB;
+  --m-border: #F3F4F6;
+  --m-radius-sm: 10px;
+  --m-radius-md: 14px;
+  --m-radius-lg: 18px;
+  --m-radius-xl: 24px;
+  --m-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  --m-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --m-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* 移动端通用工具类 */
+.m-page {
+  min-height: 100vh;
+  background: var(--m-bg);
+  padding: 16px;
+  padding-bottom: calc(90px + var(--m-safe-bottom));
+  box-sizing: border-box;
+}
+
+.m-card {
+  background: var(--m-card);
+  border-radius: var(--m-radius-lg);
+  box-shadow: var(--m-shadow);
+}
+
+.m-btn-primary {
+  background: var(--m-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--m-radius-xl);
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.m-btn-primary:active { transform: scale(0.98); background: var(--m-primary-dark); }
+
+.m-btn-dark {
+  background: var(--m-dark);
+  color: #fff;
+  border: none;
+  border-radius: var(--m-radius-xl);
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.m-btn-ghost {
+  background: transparent;
+  color: var(--m-text);
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-xl);
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.m-input {
+  width: 100%;
+  border: none;
+  background: var(--m-border);
+  border-radius: var(--m-radius-md);
+  padding: 14px 16px;
+  font-size: 15px;
+  color: var(--m-text);
+  outline: none;
+}
+.m-input::placeholder { color: var(--m-text-secondary); }
+
+.m-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--m-border);
+  color: var(--m-text);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.m-chip.active {
+  background: var(--m-dark);
+  color: #fff;
+}
+
+.m-page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--m-text);
+}
+
+.m-back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--m-border);
+  background: var(--m-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* 覆盖 Element Plus 在移动端的默认样式 */
+.mobile-app .el-button--primary {
+  background-color: var(--m-primary) !important;
+  border-color: var(--m-primary) !important;
+  border-radius: var(--m-radius-xl) !important;
+}
+.mobile-app .el-message { top: 20px !important; }

@@ -1,5 +1,6 @@
 <template>
-  <div class="app-root">
+  <MobileApp v-if="isMobile" />
+  <div v-else class="app-root">
     <div class="studio-container">
       <!-- 1. Left Sidebar: AI Control -->
       <aside class="sidebar-left glass-panel">
@@ -136,8 +137,9 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import MobileApp from '../components/MobileApp.vue';
 import { Promotion, Collection } from '@element-plus/icons-vue';
 import RoleManager from '../components/RoleManager.vue';
 import OutfitDisplay from '../components/OutfitDisplay.vue';
@@ -166,6 +168,12 @@ const wardrobeSelection = ref([]); // 衣橱手动选中的衣物
 const sidebarTab = ref('recommend'); // 左侧栏tab：recommend / chat
 
 const router = useRouter();
+
+// 移动端/桌面端切换
+const isMobile = ref(false);
+const checkMobile = () => { isMobile.value = window.innerWidth <= 768; };
+onMounted(() => { checkMobile(); window.addEventListener('resize', checkMobile); });
+onUnmounted(() => { window.removeEventListener('resize', checkMobile); });
 
 // 游客试玩模式：无登录且 guest_mode 开启时为游客
 const isGuest = ref(!localStorage.getItem('auth_token') && localStorage.getItem('guest_mode') === '1');
