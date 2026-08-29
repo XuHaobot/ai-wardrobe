@@ -11,7 +11,7 @@ class OutfitHistory(Base):
     __tablename__ = "outfit_history"
     __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_unicode_ci"}
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, nullable=False, index=True)
     title = Column(String(200), nullable=False, comment="搭配标题")
     # 衣物清单 JSON: [{"url":..., "name":...}, ...]

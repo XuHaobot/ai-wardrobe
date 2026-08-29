@@ -5,6 +5,17 @@ const backendTarget = 'http://127.0.0.1:8000'
 
 export default defineConfig({
   plugins: [vue()],
+  build: {
+    rollupOptions: {
+      output: {
+        // 框架库独立成稳定 chunk：业务代码改动后浏览器仍能命中缓存
+        manualChunks: {
+          vue: ['vue', 'vue-router'],
+          'element-plus': ['element-plus', '@element-plus/icons-vue'],
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       '/recommend': {

@@ -39,6 +39,12 @@
       {{ loading ? '生成中…' : '生成胶囊衣橱清单' }}
     </button>
 
+    <div v-if="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>AI 正在根据目的地天气与你的衣橱生成清单…</p>
+      <p class="loading-hint">通常需要 30~60 秒，请稍候</p>
+    </div>
+
     <div v-if="result" class="result-card">
       <h3 class="result-head">📍 {{ result.city }} · {{ result.days }} 天<span v-if="result.season"> · {{ result.season }}</span></h3>
       <div v-if="result.items.length" class="pack-list">
@@ -168,6 +174,24 @@ const generate = async () => {
 }
 
 .generate-btn { width: 100%; margin-bottom: 20px; }
+
+.loading-state {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--m-text-secondary);
+}
+.loading-state p { margin: 0 0 6px; }
+.loading-hint { font-size: 12px; opacity: 0.8; }
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(240, 90, 140, 0.2);
+  border-top-color: var(--m-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .result-card {
   background: var(--m-card);

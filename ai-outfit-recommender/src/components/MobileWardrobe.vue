@@ -45,12 +45,18 @@
         :class="['item-card', { selected: isSelected(item) }]"
       >
         <div class="img-wrap" @click.stop="toggleSelect(item, $event)">
-          <img :src="item.imageUrl" :alt="item.name" />
+          <img :src="item.imageUrl" :alt="item.name" loading="lazy" decoding="async" />
           <div v-if="isSelected(item)" class="check-dot">✓</div>
           <button class="detail-dot" @click.stop="handleCardClick(item)">⋯</button>
         </div>
         <p class="item-name">{{ item.name }}</p>
       </div>
+    </div>
+
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="empty-state">
+      <div class="spinner"></div>
+      <p>衣橱加载中…</p>
     </div>
 
     <!-- Empty state -->
@@ -348,6 +354,16 @@ onMounted(fetchItems);
   color: var(--m-text-secondary);
 }
 .empty-icon { font-size: 40px; margin-bottom: 10px; }
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(240, 90, 140, 0.2);
+  border-top-color: var(--m-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .selection-bar {
   position: fixed;

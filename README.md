@@ -167,6 +167,62 @@ npm run dev
 
 ---
 
+## 🚀 上线前优化记录（2026-08-29，对外演示部署准备）
+
+本轮共改动 16 个文件（+403 / -73 行），构建与接口冒烟测试全部通过。修复了 5 个**实测复现**的部署级致命 Bug，以及一批移动端体验与性能问题。
+
+### 1. 部署级致命 Bug（不修必翻车）
+
+| # | 问题 | 根因 | 修复 |
+|---|------|------|------|
+| 1 | **AI 功能全部失败**：助手推荐 / 旅行打包 / 上传识别约 10 秒必报错 | `main.js` 全局 fetch 拦截器给所有请求硬加 10s 超时，而后端 LLM 调用需 30~60s | 改为分级超时：AI 类接口（`/recommend` `/tryon` `/items` `/closet/search` `/api/chat` `/weather`）180s，其余 15s；组件自带 `signal` 时不再叠加 |
+| 2 | **全新数据库下所有写操作失败**：种子衣物插不进、注册 / 保存搭配报 `NOT NULL constraint failed: closet_items.id` | 三张表主键用 `BigInteger`，MySQL 正常但 **SQLite 仅原生 `INTEGER PRIMARY KEY` 才自增**（本地老库是历史建表，从未暴露） | `models/item.py` `user.py` `outfit_history.py` 主键改 `BigInteger().with_variant(Integer, "sqlite")`；已用全新库验证种子 16 件 / 注册 / 保存搭配全通 |
+| 3 | **容器内游客衣橱为空、模特底图 404** | `.dockerignore` 排除了整个 `backend/uploads`（演示衣物图与 `男/女.png` 都在里面），seed 脚本找不到图全部跳过 | 仅排除运行时产物 `backend/uploads/tryon_*`（约 15MB 历史试穿图），演示资产约 3.2MB 照常进镜像；同时显式 `!backend/.env` 保证 DashScope / 高德 Key 进容器 |
+| 4 | **打开首页看到一坨 JSON 而非 App** | `@app.get("/")`（API 说明 JSON）注册在 SPA 兜底路由之前，永远优先命中 | 根路径 `/` 让给前端 SPA，API 信息移到 `/api`（兼作健康检查） |
+| 5 | **手机首次打开掉进桌面版登录页** | 路由守卫无 token 且无 `guest_mode` 时强制跳 `/login`（Element Plus 桌面页） | 移动端（≤768px 或移动 UA）首次访问自动写入 `guest_mode=1` 以游客身份进入；401 时也静默降级为游客并刷新，不再跳桌面页 |
+
+### 2. 移动端体验优化
+
+- **助手页假天气 → 真天气**：原写死「28°C 广州 晴」；现改为 IP 定位城市（`/api/locate/ip`）→ 后端高德天气（`/weather`，Key 不出后端），含天气图标、穿衣建议、加载态与失败降级重试。推荐请求携带定位城市，天气参与推荐。
+- **问候语**：写死的「早上好 Alex」→ 按时间段（早上好 / 中午好 / 下午好 / 晚上好）。
+- **长任务预期管理**：AI 推荐（10~40s）、试穿生图（20~90s）、打包清单（30~60s）的 loading 均标注大致耗时，避免误以为卡死。
+- **试穿页登录态感知**：登录用户显示「去衣橱选衣物」，游客才显示「登录 / 注册」引导（原来登录了也显示「游客试玩模式」）。
+- **推荐结果显示真实衣物名**：助手页预取衣橱，把推荐 URL 映射回衣物名称，不再显示清一色「单品」。
+- **登录后清游客缓存**：登录成功即清空游客身份下的衣橱 / 已选 / 我的搭配，避免看到游客数据。
+- **细节**：衣橱页加载骨架、衣橱 / 历史页图片懒加载（`loading="lazy"`）。
+
+### 3. 性能优化（手机 4G 首屏）
+
+- `HomeView.vue` 桌面端 10 个组件全部改 `defineAsyncComponent` 异步加载——**移动端不再下载桌面 JS**；
+- `vite.config.js` 增加 `manualChunks`：`vue` / `element-plus` 拆成独立稳定 chunk，业务代码迭代后框架缓存仍命中；业务入口 chunk 仅 ~53KB（gzip 18KB）；
+- `backend/main.py` 启用 gzip（JS 传输 1MB → ~350KB，`/uploads` 图片跳过压缩省 CPU）；
+- `/uploads` 图片增加 `Cache-Control: max-age=604800`，二次打开明显提速。
+
+### 4. 页面基建
+
+- `index.html`：标题改「AI 智能衣橱 · 穿搭推荐与虚拟试穿」、`lang=zh-CN`、新增 `favicon.svg`（粉色渐变 👗）、`viewport-fit=cover`（iPhone 底部安全区生效）、`theme-color`、Apple PWA meta。
+
+### 5. 已验证项
+
+✅ 前端构建通过　✅ `/` 返回 SPA（带 gzip）　✅ `/api` 健康检查　✅ `/login` SPA 回退　✅ 游客衣橱 16 件　✅ 真实天气返回　✅ 全新库种子 / 注册 / 保存搭配全通
+
+### 6. 部署清单（Docker）
+
+```bash
+cd E:/aitryon
+docker build -t ai-wardrobe:latest .
+docker run -d -p 8080:8080 ai-wardrobe:latest
+# 自检：
+#   1. 浏览器开 http://localhost:8080/ → 应是 App 首页（不是 JSON）
+#   2. /uploads/男.png → 模特图正常
+#   3. 手机打开 → 自动游客进入助手页，天气卡为真实数据
+#   4. 点场景等推荐（30s 内）→ 添加单品 → 试穿这套（90s 内出图）
+```
+
+> 已知事项：游客「我的搭配」为 4 条前端示例数据（有文案标注）；`jwt_secret` 仍为默认值，短期演示无碍，长期公网建议更换。
+
+---
+
 ## 🔄 如何更新并推送到 GitHub（mobile-redesign 分支）
 
 > 你平时改移动端，都在 **`mobile-redesign` 分支** 上操作，不要碰 `main`，这样桌面端原版永远不会被覆盖。

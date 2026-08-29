@@ -60,10 +60,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { ElMessage } from 'element-plus';
 
 const emit = defineEmits(['navigate', 'back']);
+const app = inject('mobileApp');
 
 const tabs = [{ value: 'login', label: '登录' }, { value: 'register', label: '注册' }];
 const activeTab = ref('login');
@@ -84,6 +85,10 @@ const submitLogin = async () => {
     if (res.ok && payload.code === 1 && payload.data?.token) {
       localStorage.setItem('auth_token', payload.data.token);
       localStorage.removeItem('guest_mode');
+      // 清掉游客身份下缓存的衣橱/试穿/搭配，进入登录用户的干净状态
+      app?.setAllClosetItems?.([]);
+      app?.setSelectedItems?.([]);
+      app?.clearOutfit?.();
       ElMessage.success('登录成功');
       emit('navigate', { page: 'assistant' });
     } else {

@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
@@ -57,7 +58,39 @@ app.add_middleware(
 # 静态文件 - uploads目录
 settings = get_settings()
 os.makedirs(settings.upload_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
+
+
+class CachedStaticFiles(StaticFiles):
+    """衣物图/模特底图/试穿结果图基本不变，允许浏览器缓存一周（弱网二次打开提速明显）"""
+
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        if response.status_code == 200:
+            response.headers["Cache-Control"] = "public, max-age=604800"
+        return response
+
+
+app.mount("/uploads", CachedStaticFiles(directory=settings.upload_dir), name="uploads")
+
+
+class _SkipPathGZip:
+    """对指定路径前缀跳过 gzip（图片本身已压缩，跳过以省 CPU），其余路径启用"""
+
+    def __init__(self, app, skip_prefixes=(), minimum_size=1024):
+        self.app = app
+        self.gzip_app = GZipMiddleware(app, minimum_size=minimum_size)
+        self.skip_prefixes = skip_prefixes
+
+    async def __call__(self, scope, receive, send):
+        path = scope.get("path", "") if scope.get("type") == "http" else ""
+        if any(path.startswith(p) for p in self.skip_prefixes):
+            await self.app(scope, receive, send)
+        else:
+            await self.gzip_app(scope, receive, send)
+
+
+# gzip 压缩 JS/CSS/JSON（dist 产物 ~1.5MB → 传输 ~400KB），跳过 /uploads 图片
+app.add_middleware(_SkipPathGZip, skip_prefixes=("/uploads",))
 
 # 注册路由
 from routers.auth import router as auth_router
@@ -79,19 +112,14 @@ app.include_router(locate_router, tags=["定位服务"])
 app.include_router(history_router, tags=["搭配历史"])
 
 
-@app.get("/")
-async def root():
+@app.get("/api")
+async def api_root():
+    """API 信息（服务健康检查）。根路径 / 必须留给前端 SPA ——
+    此前根路径返回 JSON 说明，部署后用户打开首页看到的是 JSON 而非应用。"""
     return {
         "name": "AI 智能衣橱",
         "version": "2.0.0",
-        "description": "基于多模态大模型的个性化穿搭推荐系统",
-        "features": [
-            "多模态衣物识别 (Qwen VL)",
-            "向量语义搜索 (DashScope Embedding + ChromaDB)",
-            "Agent智能推荐 (Function Calling)",
-            "虚拟试穿 (即梦/WanX)",
-            "多轮对话 (Memory + SSE Streaming)",
-        ],
+        "description": "基于多模态大模型的个性化穿搭推荐系统 - API 服务",
     }
 
 

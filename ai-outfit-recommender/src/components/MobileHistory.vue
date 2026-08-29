@@ -30,7 +30,7 @@
         @click="viewDetail(item)"
       >
         <div class="history-img">
-          <img v-if="item.coverUrl" :src="item.coverUrl" />
+          <img v-if="item.coverUrl" :src="item.coverUrl" loading="lazy" decoding="async" />
           <span v-else class="history-placeholder">{{ item.title }}</span>
         </div>
         <h3 class="history-title">{{ item.title }}</h3>

@@ -137,20 +137,22 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, nextTick, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import MobileApp from '../components/MobileApp.vue';
 import { Promotion, Collection } from '@element-plus/icons-vue';
-import RoleManager from '../components/RoleManager.vue';
-import OutfitDisplay from '../components/OutfitDisplay.vue';
-import UploadInput from '../components/UploadInput.vue';
-import WeatherWidget from '../components/WeatherWidget.vue';
-import WeatherInput from '../components/WeatherInput.vue';
-import ClosetManager from '../components/ClosetManager.vue';
-import RecommendationList from '../components/RecommendationList.vue';
-import ChatPanel from '../components/ChatPanel.vue';
-import HistoryPanel from '../components/HistoryPanel.vue';
-import PackingDialog from '../components/PackingDialog.vue';
+
+// 桌面端组件全部异步加载：移动端首屏不再下载桌面 JS（含 html2canvas）
+const RoleManager = defineAsyncComponent(() => import('../components/RoleManager.vue'));
+const OutfitDisplay = defineAsyncComponent(() => import('../components/OutfitDisplay.vue'));
+const UploadInput = defineAsyncComponent(() => import('../components/UploadInput.vue'));
+const WeatherWidget = defineAsyncComponent(() => import('../components/WeatherWidget.vue'));
+const WeatherInput = defineAsyncComponent(() => import('../components/WeatherInput.vue'));
+const ClosetManager = defineAsyncComponent(() => import('../components/ClosetManager.vue'));
+const RecommendationList = defineAsyncComponent(() => import('../components/RecommendationList.vue'));
+const ChatPanel = defineAsyncComponent(() => import('../components/ChatPanel.vue'));
+const HistoryPanel = defineAsyncComponent(() => import('../components/HistoryPanel.vue'));
+const PackingDialog = defineAsyncComponent(() => import('../components/PackingDialog.vue'));
 
 // State
 const currentRole = ref('female');

@@ -36,19 +36,28 @@
       <div v-if="loading" class="stage-state">
         <div class="spinner"></div>
         <p>AI 正在为你生成试穿效果…</p>
+        <p class="stage-hint">生图约需 20~90 秒，请稍候</p>
       </div>
       <img v-else-if="resultImage" :src="resultImage" class="result-image" alt="试穿结果" />
       <img v-else :src="baseRoleImage" class="result-image model-base" alt="模特底图" />
     </div>
 
-    <!-- Footer actions -->
+    <!-- Footer actions：按登录态展示 -->
     <div class="tryon-footer">
-      <button class="guest-link" @click="emit('navigate', { page: 'wardrobe' })">
-        游客试玩模式
-      </button>
-      <button class="m-btn-primary login-btn" @click="emit('navigate', { page: 'login' })">
-        登录 / 注册
-      </button>
+      <template v-if="isGuest">
+        <button class="guest-link" @click="emit('navigate', { page: 'login' })">
+          游客试玩中 · 登录后可保存搭配
+        </button>
+        <button class="m-btn-primary login-btn" @click="emit('navigate', { page: 'login' })">
+          登录 / 注册
+        </button>
+      </template>
+      <template v-else>
+        <span class="tryon-tip">在衣橱勾选衣物即可试穿多件</span>
+        <button class="m-btn-primary login-btn" @click="emit('navigate', { page: 'wardrobe' })">
+          去衣橱选衣物
+        </button>
+      </template>
     </div>
   </div>
 </template>
@@ -65,6 +74,7 @@ const role = computed({
   set: (v) => app.setRole(v)
 });
 const selectedItems = computed(() => app.selectedItems.value);
+const isGuest = computed(() => app.isGuest());
 
 const loading = ref(false);
 const resultImage = ref('');
@@ -235,13 +245,21 @@ const doTryOn = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+}
+.tryon-tip {
+  font-size: 12px;
+  color: var(--m-text-secondary);
 }
 .guest-link {
   background: transparent;
   border: none;
   color: #6366F1;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
+  padding: 0;
+  text-align: left;
 }
-.login-btn { padding: 12px 24px; }
+.login-btn { padding: 12px 24px; white-space: nowrap; }
+.stage-hint { font-size: 12px; opacity: 0.8; margin: 4px 0 0; }
 </style>
