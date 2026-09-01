@@ -1,14 +1,12 @@
 # ============================================================
-# AI 智能衣橱 部署镜像（单容器同时跑前后端）
-# 构建上下文：项目根目录（/e/aitryon）
-# 说明：前端构建产物 dist 由后端在 / 路径托管（main.py 已加 SPA 托管）
+# AI 智能衣橱 部署镜像（带国内极速源加速）
 # ============================================================
 
 # ---------- 阶段 1：构建前端 ----------
 FROM node:20-alpine AS frontend
 WORKDIR /build
 COPY ai-outfit-recommender/package.json ai-outfit-recommender/package-lock.json* ./
-RUN npm install
+RUN npm install --registry=https://registry.npmmirror.com
 COPY ai-outfit-recommender/ ./
 RUN npm run build
 
@@ -21,14 +19,14 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app/backend
 
-# 安装 Python 依赖
+# 安装 Python 依赖（使用阿里云高速镜像源）
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
 
 # 复制后端代码
 COPY backend/ ./
 
-# 前端构建产物 → /app/ai-outfit-recommender/dist（与 main.py 的 _FRONTEND_DIST 对应）
+# 前端构建产物
 COPY --from=frontend /build/dist /app/ai-outfit-recommender/dist
 
 # 启动脚本
